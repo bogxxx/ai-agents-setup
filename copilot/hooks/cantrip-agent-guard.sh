@@ -36,6 +36,19 @@ if has_name 'edit|create|apply_patch|str_replace_editor|str_replace|write|multi_
   deny "The orchestrator does not edit files. Delegate this change to a worker with a self-contained assignment (objective, files, governing ADRs, acceptance criteria)."
 fi
 
+if has_name 'view|grep|glob|rg|Read|Grep|Glob'; then
+  budget=${CANTRIP_READ_BUDGET:-30}
+  state_dir=${CANTRIP_STATE_DIR:-${TMPDIR:-/tmp}/cantrip-guard}
+  mkdir -p "$state_dir"
+  reads=$(cat "$state_dir/$sid.reads" 2>/dev/null || echo 0)
+  reads=$((reads + 1))
+  printf '%s' "$reads" > "$state_dir/$sid.reads"
+  if [ "$reads" -gt "$budget" ]; then
+    deny "Read budget exhausted ($budget view/grep/glob calls this session). Reading code is the explorer's job: delegate the question to an explorer, or ask the worker to report the hunk you need. Use git diff --stat to see what changed."
+  fi
+  exit 0
+fi
+
 has_name 'powershell|bash|write_powershell|write_bash|Bash' || exit 0
 
 text=$(printf '%s' "$compact" | grep -oE '"(command|input)":"([^"\\]|\\.)*"' | sed 's/^"[a-z]*":"//; s/"$//' \

@@ -8,6 +8,8 @@ $cases = Get-Content -Raw ([IO.Path]::Combine($here, 'test', 'guard-cases.json')
 $fakeHome = Join-Path ([IO.Path]::GetTempPath()) ("cantrip-hooktest-" + [guid]::NewGuid())
 New-Item -ItemType Directory -Force ([IO.Path]::Combine($fakeHome, 'session-state', 'root-session')) | Out-Null
 $env:COPILOT_HOME = $fakeHome
+$env:CANTRIP_STATE_DIR = [IO.Path]::Combine($fakeHome, 'guard-state')
+New-Item -ItemType Directory -Force ([IO.Path]::Combine($fakeHome, 'session-state', 'root-budget')) | Out-Null
 
 $psHost = (Get-Process -Id $PID).Path
 $runners = @(@{ name = 'ps1'; run = { param($json) $json | & $psHost -NoProfile -ExecutionPolicy Bypass -File (Join-Path $here 'cantrip-agent-guard.ps1') } })
@@ -37,7 +39,16 @@ foreach ($runner in $runners) {
             Write-Output ("FAIL [{0}] expected {1}, got {2}: {3}" -f $runner.name, $case.e, $got, $json)
         }
     }
-    Write-Output ("[{0}] {1} cases run" -f $runner.name, $cases.Count)
+    # Read budget: with a budget of 2, the third root view is denied; subagent reads are never counted.
+    $env:CANTRIP_READ_BUDGET = '2'
+    Remove-Item -Recurse -Force $env:CANTRIP_STATE_DIR -ErrorAction SilentlyContinue
+    $view = @{ sessionId = 'root-budget'; toolName = 'view'; toolArgs = @{ path = 'a.py' } } | ConvertTo-Json -Compress
+    $sub = @{ sessionId = 'subagent-1234'; toolName = 'view'; toolArgs = @{ path = 'a.py' } } | ConvertTo-Json -Compress
+    $got = @($view, $view, $sub, $view) | ForEach-Object { if ("$(& $runner.run $_)" -match '"permissionDecision":\s*"deny"') { 'deny' } else { 'allow' } }
+    if (($got -join ',') -ne 'allow,allow,allow,deny') { $failures++; Write-Output ("FAIL [{0}] read budget: {1}" -f $runner.name, ($got -join ',')) }
+    Remove-Item Env:CANTRIP_READ_BUDGET
+    Remove-Item -Recurse -Force $env:CANTRIP_STATE_DIR -ErrorAction SilentlyContinue
+    Write-Output ("[{0}] {1} cases run, plus the read budget" -f $runner.name, $cases.Count)
 }
 
 $node = Get-Command node -ErrorAction SilentlyContinue

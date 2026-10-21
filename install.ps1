@@ -14,4 +14,7 @@ foreach ($f in 'cantrip-agent-guard.ps1', 'cantrip-agent-guard.sh', 'archgate-st
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
     Write-Warning 'node is not on PATH: the Archgate stop gate (agentStop hook) will not run.'
 }
+if (-not ((Get-Command archgate -ErrorAction SilentlyContinue) -or (Test-Path (Join-Path $env:USERPROFILE '.archgate\bin\archgate.exe')))) {
+    Write-Warning 'Archgate CLI not found: install it with: irm https://cli.archgate.dev/install-windows | iex  (then run: archgate login)'
+}
 Write-Output "installed to $copilotHome; restart Copilot sessions to load the agents"

@@ -5,6 +5,8 @@ $ErrorActionPreference = 'Stop'
 $allowedAgents = @('explorer', 'planner', 'worker', 'reviewer')
 $editTools = @('edit', 'create', 'apply_patch', 'str_replace_editor', 'str_replace', 'write', 'multi_edit', 'Edit', 'Write', 'MultiEdit', 'NotebookEdit')
 $shellTools = @('powershell', 'bash', 'write_powershell', 'write_bash', 'Bash')
+$readTools = @('view', 'grep', 'glob', 'rg', 'Read', 'Grep', 'Glob')
+$readBudget = if ($env:CANTRIP_READ_BUDGET) { [int]$env:CANTRIP_READ_BUDGET } else { 30 }
 $mutating = @(
     '\bgit\b[^;|&\r\n]*?\s(commit|merge|rebase|cherry-pick|revert|push|pull|reset|restore|checkout|switch|stash|am|apply|add|rm|mv|clean|tag|init|clone)\b',
     '\bgit\b[^;|&\r\n]*?\sworktree\s+(add|remove|move|prune)\b',
@@ -59,6 +61,20 @@ foreach ($call in $calls) {
     }
 
     if (-not $isRoot) { continue }
+
+    if ($call.name -in $readTools) {
+        $stateDir = if ($env:CANTRIP_STATE_DIR) { $env:CANTRIP_STATE_DIR } else { Join-Path ([IO.Path]::GetTempPath()) 'cantrip-guard' }
+        New-Item -ItemType Directory -Force $stateDir | Out-Null
+        $counter = Join-Path $stateDir "$sessionId.reads"
+        $reads = 0
+        if (Test-Path -LiteralPath $counter) { [int]::TryParse((Get-Content -LiteralPath $counter -Raw).Trim(), [ref]$reads) | Out-Null }
+        $reads++
+        Set-Content -LiteralPath $counter -Value $reads -NoNewline
+        if ($reads -gt $readBudget) {
+            Deny "Read budget exhausted ($readBudget view/grep/glob calls this session). Reading code is the explorer's job: delegate the question to an explorer, or ask the worker to report the hunk you need. Use git diff --stat to see what changed."
+        }
+        continue
+    }
 
     if ($call.name -in $editTools) {
         Deny "The orchestrator does not edit files. Delegate this change to a worker with a self-contained assignment (objective, files, governing ADRs, acceptance criteria)."
