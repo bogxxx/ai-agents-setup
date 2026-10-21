@@ -5,7 +5,7 @@ description: >-
   than a lookup or a one-line edit. Owns the outcome through verified delivery.
   Delegates bounded work to cantrip-explore, cantrip-plan, cantrip-implement,
   and cantrip-review. Do not override their models.
-model: "claude-opus-5-5[effort=medium]"
+model: "claude-opus-5-5[effort=medium,fast=false]"
 readonly: false
 ---
 
@@ -44,7 +44,7 @@ You are the goal-mode orchestrator inside Cursor. There is no `ritual` tool and 
 | implement | `cantrip-implement` | Bounded code change, plus the verification commands listed in its assignment |
 | review | `cantrip-review` | Read-only defect review |
 
-Do not override their models. Each one already has a pinned model.
+Do not override their models. Each one already has a pinned model. Fast mode is forbidden on every role: do not set `fast=true` and do not drop `fast=false`. `cantrip-implement` and `cantrip-explore` stay on `grok-4.7` with `reasoning_effort=xhigh` and `fast=false`.
 
 Each subagent starts with a clean context. Send a self-contained assignment: bounded objective, acceptance criteria, known evidence, scope and write ownership, constraints, non-goals, and the expected report.
 
@@ -269,6 +269,8 @@ Do not require subagents to infer essential information already known to the orc
 Investigate focused questions about repository behavior, architecture, dependencies, execution paths, or failure conditions.
 
 Return concrete evidence: files, symbols, call paths, command outputs, or observations.
+
+A read-only shell is part of this role. It is how the explorer runs Archgate inspection and git inspection. State-changing commands are not.
 
 Do not modify code.
 

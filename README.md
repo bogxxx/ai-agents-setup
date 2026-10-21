@@ -9,7 +9,7 @@ A role-based multi-agent setup ("cantrip") with Archgate ADR governance.
 | Tool | Why | Check |
 |---|---|---|
 | GitHub Copilot app or Copilot CLI ≥ 1.0.99 | agent-scoped hooks in `.agent.md` frontmatter | `copilot --version` |
-| Access to the models in the `model:` fields: claude-opus-5.5, claude-haiku-5.5, gpt-6-luna, gpt-6.1-sol | each role has a pinned model; change it if you lack access | — |
+| Access to the models in the `model:` fields: claude-opus-5.5, claude-haiku-5.5, gpt-6-luna, gpt-6.1-sol, and on Cursor `grok-4.7` and `muse-wonder` | each role has a pinned model; change it if you lack access. Fast mode is off | — |
 | git | ADR history, diffs, and the credential helper that Archgate uses | `git --version` |
 | Node.js ≥ 18 | runs the `agentStop` Archgate stop gate (without it the gate is skipped) | `node --version` |
 | PowerShell 5.1+ (Windows) or `sh` (macOS/Linux) | runs the `preToolUse` guard | — |
@@ -91,12 +91,16 @@ To update, pull this repository, re-run the installer, and restart open sessions
 | Worker / implementer | `worker.agent.md` | `cantrip-implement.md` |
 | Reviewer (static) | `reviewer.agent.md` | `cantrip-review.md` |
 
-The orchestrator (the most expensive model) owns the task, runs the Archgate preflight and closing loop, and confirms the result. It does not edit files and does little reading itself. Most of the tokens are spent by the cheaper models: the worker makes every change and runs the verification commands listed in its assignment, and the explorer does the reading, including the Archgate briefing and the lesson evidence.
+The orchestrator owns the task, runs the Archgate preflight and closing loop, and confirms the result. It does not edit files and does little reading itself. Most of the tool calls are made by the worker and the explorer: the worker makes every change and runs the verification commands listed in its assignment, and the explorer does the reading, including the Archgate briefing and the lesson evidence.
+
+Explorers have a shell, and it is read-only. They use it for Archgate inspection (`adr list`, `review-context`, `adr show`) and git inspection (`status`, `diff`, `log`, `show`). Commands that change the repository or the environment belong to the worker. On Cursor, `readonly: true` enforces that: file edits and state-changing shell commands are blocked, and read-only shell commands still run. On Copilot, the explorer keeps `bash` and `powershell`, and its prompt forbids mutating commands.
+
+Fast mode is not allowed on any role. Cursor's worker (`cantrip-implement`) and explorer (`cantrip-explore`) are pinned to `grok-4.7` with `reasoning_effort=xhigh` and `fast=false`. Every other Cursor role sets `fast=false` as well. Do not override these models.
 
 ## How it works
 
 ### GitHub Copilot
-1. Create `~/.copilot/agents/` and add one `<name>.agent.md` per role. Each file has YAML frontmatter (`name`, `description`, `model`, `tools`) followed by the system prompt. The orchestrator has no `edit`/`create` tools; its shell is for Archgate commands, read-only inspection, and verification. Explorer and planner are limited to read and shell tools, and the reviewer to read tools.
+1. Create `~/.copilot/agents/` and add one `<name>.agent.md` per role. Each file has YAML frontmatter (`name`, `description`, `model`, `tools`) followed by the system prompt. The orchestrator has no `edit`/`create` tools; its shell is for Archgate commands, read-only inspection, and verification. Explorer and planner are limited to read and shell tools, and the reviewer's tools are read-only. The explorer's shell is read-only: Archgate inspection and git inspection, not commands that change the repository.
    Subagents are restricted with the `agents` frontmatter field: the orchestrator sets `agents: [explorer, planner, worker, reviewer]` (and its prompt forbids built-in/default agent types such as `general-purpose`), while the four role agents set `agents: []` so they cannot spawn subagents.
    Tool lists include both `bash*` and `powershell*` tools; unknown names are ignored, so each agent gets the shell of its platform. Without a shell tool the orchestrator used to fall back to `general-purpose`.
    The orchestrator must delegate to the planner before any non-trivial worker assignment, and gives every change to a worker, including git, GitHub, and ADR operations.
@@ -115,6 +119,6 @@ Test the hooks with `powershell -File copilot/hooks/test-hooks.ps1`. It runs the
 - The Archgate Copilot plugin (`reviewer`, `lessons-learned`, `adr-author` skills) is used when installed. Installing it requires `archgate login`; the loop falls back to the CLI without it.
 
 ### Cursor
-1. Create `~/.cursor/agents/` with one markdown file per role (frontmatter: `name`, `description`, optional `model`, `readonly`). `cantrip-goal` is the entry agent that delegates to `cantrip-explore/plan/implement/review`. It follows the same preflight and closing loop, enforced by its prompt only.
+1. Create `~/.cursor/agents/` with one markdown file per role (frontmatter: `name`, `description`, optional `model`, `readonly`). `cantrip-goal` is the entry agent that delegates to `cantrip-explore/plan/implement/review`. It follows the same preflight and closing loop, enforced by its prompt only. `cantrip-explore` is `readonly: true`, which still allows its read-only shell. `cantrip-implement` and `cantrip-explore` use `grok-4.7` at extra-high reasoning with fast mode off.
 2. Add the hook script `~/.cursor/hooks/archgate-check.sh` and register it in `~/.cursor/hooks.json` as an `afterFileEdit` hook. It runs `archgate check` on each edited file inside repos that have `.archgate/`.
 3. Restart Cursor.

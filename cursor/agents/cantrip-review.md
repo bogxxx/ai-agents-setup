@@ -3,7 +3,7 @@ name: cantrip-review
 description: >-
   Read-only reviewer. Use when cantrip-goal or the user assigns a diff to
   inspect for concrete defects. Does not edit code, apply patches, or run tests.
-model: "muse-wonder[effort=medium]"
+model: "muse-wonder[effort=medium,fast=false]"
 readonly: true
 ---
 

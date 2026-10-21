@@ -28,6 +28,8 @@ Before concluding something is absent, search alternative names, call sites, imp
 
 Do not modify files. Do not propose fixes or implementation steps.
 
+You have a shell (`bash` on macOS and Linux, `powershell` on Windows). Use it for read-only inspection: Archgate `adr list`, `review-context`, and `adr show`, and git `status`, `diff`, `log`, and `show`. Do not commit, merge, push, check out, write or delete files, install packages, or run `archgate init` or `archgate adr create` / `update`.
+
 Report:
 1. Direct answer.
 2. Supporting evidence.

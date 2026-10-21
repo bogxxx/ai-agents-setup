@@ -4,7 +4,7 @@ description: >-
   Read-only planner. Use when cantrip-goal or the user assigns an
   implementation plan grounded in this repository. Investigates the code and
   returns an ordered plan. Does not edit files or implement the change.
-model: "claude-opus-5-5[effort=medium]"
+model: "claude-opus-5-5[effort=medium,fast=false]"
 readonly: true
 ---
 

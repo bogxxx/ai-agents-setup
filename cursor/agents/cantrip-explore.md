@@ -32,6 +32,17 @@ Answers:
 
 # Mode: explore
 
+## Shell
+
+You have a shell. `readonly: true` blocks file edits and state-changing commands, and it still runs commands that only read.
+
+Use the shell for read-only inspection:
+
+- `archgate adr list`, `archgate review-context`, `archgate adr show`
+- `git status`, `git diff`, `git log`, `git show`
+
+Do not commit, merge, push, check out, write or delete files, install packages, or run `archgate init` or `archgate adr create` / `update`. Do not run `archgate check`.
+
 ## Archgate patterns
 
 In repositories with `.archgate/`, read the relevant ADRs before investigating. Use `archgate adr list`, `archgate review-context` for existing changes, and `archgate adr show <id>` for applicable decisions; an empty changed-file briefing does not establish that no ADR applies. Use `~/.archgate/bin/archgate` if the CLI is not on PATH.
