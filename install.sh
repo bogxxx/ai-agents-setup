@@ -8,6 +8,8 @@ cp "$here"/copilot/copilot-instructions.md "$HOME/.copilot/"
 mkdir -p "$HOME/.copilot/cantrip"
 cp "$here"/copilot/hooks/cantrip-agent-guard.ps1 "$here"/copilot/hooks/cantrip-agent-guard.sh "$here"/copilot/hooks/archgate-stop-gate.mjs "$HOME/.copilot/cantrip/"
 cp "$here"/cursor/agents/*.md "$HOME/.cursor/agents/"
+echo "Cursor model pins (do not replace these with picker slugs):"
+grep -h '^model:' "$here"/cursor/agents/*.md
 cp "$here"/cursor/hooks/archgate-check.sh "$HOME/.cursor/hooks/"
 [ -f "$HOME/.cursor/hooks.json" ] && echo "~/.cursor/hooks.json exists; merge cursor/hooks.json manually." \
   || sed "s#/Users/bohdan.krechko#$HOME#" "$here/cursor/hooks.json" > "$HOME/.cursor/hooks.json"

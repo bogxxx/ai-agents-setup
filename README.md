@@ -120,5 +120,15 @@ Test the hooks with `powershell -File copilot/hooks/test-hooks.ps1`. It runs the
 
 ### Cursor
 1. Create `~/.cursor/agents/` with one markdown file per role (frontmatter: `name`, `description`, optional `model`, `readonly`). `cantrip-goal` is the entry agent that delegates to `cantrip-explore/plan/implement/review`. It follows the same preflight and closing loop, enforced by its prompt only. `cantrip-explore` is `readonly: true`, which still allows its read-only shell. `cantrip-implement` and `cantrip-explore` use `grok-4.7` at extra-high reasoning with fast mode off.
+
+   The `model:` lines use bracket parameters on purpose. Do not replace them with a picker slug.
+
+   | Role | Pin | What a slug does instead |
+   |---|---|---|
+   | goal, plan | `claude-opus-5-5[effort=medium,fast=false]` | `claude-opus-5-5-medium` follows the picker effort and can turn Fast on |
+   | explore, implement | `grok-4.7[reasoning_effort=xhigh,fast=false]` | `grok-4.7-xhigh` drops `fast=false`. On Premium and above, Fast is the default speed tier, so the agent runs Fast |
+   | review | `muse-wonder[effort=medium,fast=false]` | `muse-wonder-1.0-high` is Muse High |
+
+   Cursor's subagent launcher only offers one variant per model family, taken from the model picker. If Muse Wonder is set to High there, Medium is not in that list, and a parent agent that "fixes" an unrecognized id will write the High slug into `~/.cursor/agents/`. Grok's effort parameter is `reasoning_effort`, not `effort`. `fast=false` has to stay in the file. There is a separate Cursor bug where a subagent still runs Fast when the parent chat is on another model, even with that pin. The workaround is to open the model picker, select Grok 4.7, turn Fast on and then off so the off state is saved, then start a new chat. Set Muse Wonder's effort to Medium in that same picker before expecting the review agent to run at Medium.
 2. Add the hook script `~/.cursor/hooks/archgate-check.sh` and register it in `~/.cursor/hooks.json` as an `afterFileEdit` hook. It runs `archgate check` on each edited file inside repos that have `.archgate/`.
 3. Restart Cursor.

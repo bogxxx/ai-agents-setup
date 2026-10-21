@@ -4,6 +4,7 @@ description: >-
   Read-only fact finder. Use when cantrip-goal or the user assigns one
   repository question. Searches and answers with paths and evidence. Does not
   edit, plan, or propose fixes.
+# Keep the brackets. grok-4.7-xhigh drops fast=false, and Fast is then the default.
 model: "grok-4.7[reasoning_effort=xhigh,fast=false]"
 readonly: true
 ---

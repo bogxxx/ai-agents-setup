@@ -4,6 +4,7 @@ description: >-
   Implementation worker. Use when cantrip-goal or the user assigns a bounded
   code change. Implements that assignment and runs the verification it lists. Does not decide
   that the overall goal is complete.
+# Keep the brackets. grok-4.7-xhigh drops fast=false, and Fast is then the default.
 model: "grok-4.7[reasoning_effort=xhigh,fast=false]"
 readonly: false
 ---
