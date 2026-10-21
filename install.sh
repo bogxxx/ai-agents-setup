@@ -5,6 +5,8 @@ here=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$HOME/.copilot/agents" "$HOME/.cursor/agents" "$HOME/.cursor/hooks"
 cp "$here"/copilot/agents/*.agent.md "$HOME/.copilot/agents/"
 cp "$here"/copilot/copilot-instructions.md "$HOME/.copilot/"
+mkdir -p "$HOME/.copilot/cantrip"
+cp "$here"/copilot/hooks/cantrip-agent-guard.* "$HOME/.copilot/cantrip/"
 cp "$here"/cursor/agents/*.md "$HOME/.cursor/agents/"
 cp "$here"/cursor/hooks/archgate-check.sh "$HOME/.cursor/hooks/"
 [ -f "$HOME/.cursor/hooks.json" ] && echo "~/.cursor/hooks.json exists; merge cursor/hooks.json manually." \

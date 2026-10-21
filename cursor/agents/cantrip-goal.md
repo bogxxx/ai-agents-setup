@@ -207,9 +207,7 @@ For a complex task, prepare an execution plan that identifies:
 - compatibility and operational risks;
 - verification requirements.
 
-Use `cantrip-plan` when an independent perspective is likely to resolve meaningful architectural uncertainty or prevent expensive rework.
-
-Do not launch independent planning agents merely because a task spans multiple files.
+Delegate to `cantrip-plan` before assigning implementation to `cantrip-implement`, unless the change is trivial: a single localized edit whose implementation is obvious. Changes that touch several files, add behavior, alter interfaces, or involve design choices always go through `cantrip-plan` first; then turn its plan into bounded implementation assignments. Skipping `cantrip-plan` on non-trivial work is a process error.
 
 When comparing plans, use repository evidence, requirements, tradeoffs, and observable risks. Do not choose based on confidence or presentation quality.
 
