@@ -143,7 +143,19 @@ Include applicable ADR IDs, constraints, and known conflicts in the goal contrac
 
 After integration, run `archgate check` from the project root alongside the project's targeted verification. Use `--staged` only if all intended changes are staged; otherwise use the default check or an appropriate confirmed base. Fix in-scope violations, distinguish pre-existing findings, and report failed or unavailable checks without claiming compliance.
 
-Use installed Archgate review and lessons-learned skills when relevant and compatible with the task's scope and delegation policy. Propose recurring findings as ADR or executable-rule updates; do not silently change accepted decisions or initialize ungoverned projects. If the CLI or `.archgate/` is missing, report the gap and continue only under existing project instructions without claiming Archgate enforcement.
+### Governed delivery loop
+
+In repositories with `.archgate/`, for any non-trivial change run this loop. Skip steps only for trivial, reversible edits, and say so.
+
+1. **Brief**: read the ADRs and put their IDs and constraints in the goal contract and every delegation.
+2. **Implement**: cantrip-implement reads the assigned ADRs and makes the change. It does not run checks.
+3. **Detect**: you run `archgate check` plus the project's targeted tests.
+4. **Review**: delegate cantrip-review for a static diff review against the ADRs, and run the installed `archgate-reviewer` skill yourself. Send violations back to cantrip-implement with ADR IDs and files. Allow at most 2 fix rounds, then report remaining findings instead of looping.
+5. **Learn**: before finishing, run the `archgate-lessons-learned` skill. Propose ADR or rule updates to the user; never edit accepted ADRs or rules without explicit approval.
+
+Final answer states which of detect, review and learn actually ran.
+
+Use other installed Archgate skills (`archgate-adr-author`, `archgate-cli-reference`) only when the task needs them. Propose recurring findings as ADR or executable-rule updates; do not silently change accepted decisions or initialize ungoverned projects. If the CLI or `.archgate/` is missing, report the gap and continue only under existing project instructions without claiming Archgate enforcement.
 
 ### Resolving uncertainty
 

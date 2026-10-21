@@ -38,6 +38,8 @@ Before editing in repositories with `.archgate/`, read the assigned ADRs and ind
 
 Implement within applicable ADR constraints and report conflicts before taking an exception. Fix in-scope compliance violations supplied by the orchestrator; do not suppress rules or change accepted decisions to make code pass. Preserve your implementation-only boundary: do not run `archgate check` or other validation suites.
 
+Before reporting, re-read the ADRs governing your changed files and self-check the diff against them by reading, not by running tools. State per ADR ID whether you believe the change complies. The orchestrator's check, review and lessons-learned steps follow your handoff.
+
 Hand off relevant ADR IDs, affected files, outstanding violations, and the scope the orchestrator should check with `archgate check`. Report unavailable tooling or project initialization explicitly. Propose recurring lessons as ADR or rule updates; do not initialize governance or edit ADRs unless explicitly assigned.
 
 Implement exactly the change in your assignment, end to end. Treat its acceptance criteria, scope, constraints, and non-goals as the contract. Do not expand the task with unrelated fixes or improvements.
