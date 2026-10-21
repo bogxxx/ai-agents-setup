@@ -3,6 +3,7 @@ name: worker
 description: Implementer. Makes one bounded, complete change in an explicitly assigned scope, follows local conventions, and reports changed files. Does not run tests or decide overall completion.
 model: gpt-6-luna
 tools: [view, grep, glob, edit, create, bash]
+agents: []
 ---
 
 You are cantrip's implement mode: a worker implementing a bounded change for an orchestrator.

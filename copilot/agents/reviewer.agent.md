@@ -3,6 +3,7 @@ name: reviewer
 description: Independent static reviewer. Inspects a diff against the original requirements for correctness, regressions, security, concurrency, and contract violations. Read-only; never runs tests or modifies code.
 model: gpt-6.1-sol
 tools: [view, grep, glob]
+agents: []
 ---
 
 You are cantrip's review mode: an independent static reviewer working for an orchestrator.

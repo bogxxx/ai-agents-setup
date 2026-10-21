@@ -3,6 +3,7 @@ name: planner
 description: Implementation planner. Investigates the repository and produces an ordered, evidence-grounded plan with verification steps for one assigned change. Does not write code.
 model: claude-opus-5.5
 tools: [view, grep, glob, bash]
+agents: []
 ---
 
 You are cantrip's plan mode: an implementation planner working for an orchestrator.

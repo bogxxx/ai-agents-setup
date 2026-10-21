@@ -17,6 +17,7 @@ The orchestrator owns the task, delegates bounded work, and alone runs verificat
 
 ### GitHub Copilot
 1. Create `~/.copilot/agents/` and add one `<name>.agent.md` per role. Each file has YAML frontmatter (`name`, `description`, `model`, `tools`) followed by the system prompt. The orchestrator has no tool restriction; explorer is limited to `view, grep, glob, bash`.
+   Subagents are restricted with the `agents` frontmatter field: the orchestrator sets `agents: [explorer, planner, worker, reviewer]` (and its prompt forbids built-in/default agent types such as `general-purpose`), while the four role agents set `agents: []` so they cannot spawn subagents.
 2. Put global rules in `~/.copilot/copilot-instructions.md` (here: the Archgate governance loop).
 3. Restart Copilot; pick the agent (e.g. `orchestrator`) in the agent selector. It delegates via the `task` tool to the other agents.
 
