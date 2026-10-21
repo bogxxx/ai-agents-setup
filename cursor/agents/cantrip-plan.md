@@ -36,7 +36,7 @@ Answers:
 
 In repositories with `.archgate/`, read applicable decisions before planning: use `archgate adr list`, `archgate review-context` for existing changes, and `archgate adr show <id>` for ADRs governing the intended files. Do not infer that no ADR applies from an empty changed-file briefing. Use `~/.archgate/bin/archgate` if the CLI is not on PATH.
 
-Map implementation steps to applicable ADR IDs and constraints. Identify conflicts and compliant alternatives rather than planning silent exceptions. Include `archgate check` in the orchestrator's verification plan, covering unstaged work as well as staged work. Do not execute checks, initialize governance, or edit ADRs. Report missing tooling, initialization, or decision evidence explicitly.
+Map implementation steps to applicable ADR IDs and constraints. Identify conflicts and compliant alternatives rather than planning silent exceptions. Include `archgate check --base` in the orchestrator's verification plan. Check recent `.archgate/` changes (`git log --since=90.days -- .archgate/`) for lessons that apply. List ADR gaps: design decisions this plan makes that no ADR covers. Do not execute checks, initialize governance, or edit ADRs. Report missing tooling, initialization, or decision evidence explicitly.
 
 Investigate the repository before planning. Read the relevant code, tests, configuration, and documentation needed to understand the current behavior, existing patterns, and constraints.
 

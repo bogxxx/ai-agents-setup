@@ -1,6 +1,35 @@
-# preToolUse guard for the orchestrator: the task tool may only launch cantrip agents.
+# preToolUse guard for the cantrip orchestrator.
+# - Every agent in the session: `task` may only launch cantrip agents.
+# - The orchestrator itself (root session): no file edits and no mutating shell commands; delegate them to a worker.
 $ErrorActionPreference = 'Stop'
-$allowed = @('explorer', 'planner', 'worker', 'reviewer')
+$allowedAgents = @('explorer', 'planner', 'worker', 'reviewer')
+$editTools = @('edit', 'create', 'apply_patch', 'str_replace_editor', 'str_replace', 'write', 'multi_edit', 'Edit', 'Write', 'MultiEdit', 'NotebookEdit')
+$shellTools = @('powershell', 'bash', 'write_powershell', 'write_bash', 'Bash')
+$mutating = @(
+    '\bgit\b[^;|&\r\n]*?\s(commit|merge|rebase|cherry-pick|revert|push|pull|reset|restore|checkout|switch|stash|am|apply|add|rm|mv|clean|tag|init|clone)\b',
+    '\bgit\b[^;|&\r\n]*?\sworktree\s+(add|remove|move|prune)\b',
+    '\bgit\b[^;|&\r\n]*?\sbranch\s+(-[dDmMcCf]|--(delete|move|copy|force))',
+    '\bgh\s+(pr|issue)\s+(create|edit|merge|close|reopen|comment|review|ready|delete|lock|transfer|checkout)\b',
+    '\bgh\s+(release|repo|label|workflow|run|secret|variable)\s+(create|delete|edit|upload|enable|disable|run|rerun|cancel|set|clone|fork)\b',
+    '\bgh\s+api\b[^;|\r\n]*(-X|--method)\s*(POST|PUT|PATCH|DELETE)',
+    '\b(Set-Content|Add-Content|Out-File|New-Item|Remove-Item|Move-Item|Copy-Item|Rename-Item|Clear-Content|Export-Csv|Export-Clixml|Expand-Archive|Compress-Archive|Set-ItemProperty)\b',
+    '\[(System\.)?IO\.(File|Directory)\]::(Write|Append|Delete|Move|Copy|Create|Replace)',
+    '-OutFile\b',
+    '(?m)(^|[;&|(]\s*)\s*(rm|mv|cp|touch|mkdir|rmdir|tee|truncate|ln|del|copy|move|ren|md|rd)\s',
+    '\bsed\s+-i', '\bperl\s+-\w*i',
+    '(^|[^0-9&=>\-])>>?(?!\s*(\$null|/dev/null|nul\b|&))\s*\S',
+    '\s--fix\b', '\s--write\b',
+    '\bruff\s+format\b(?![^;|\r\n]*--(check|diff))',
+    '\bblack\b(?![^;|\r\n]*--check)',
+    '\b(uv\s+(add|remove|lock)|uv\s+pip\s+install|pip3?\s+install|npm\s+(install|i|ci|uninstall|update)|pnpm\s+(add|install|remove)|yarn\s+(add|install|remove)|bun\s+(add|install|remove))\b',
+    '\barchgate\b[^;|\r\n]*\s(init|adr\s+(create|update|import))\b'
+)
+
+function Deny([string]$reason) {
+    @{ permissionDecision = 'deny'; permissionDecisionReason = $reason } | ConvertTo-Json -Compress
+    exit 0
+}
+
 try {
     $payload = [Console]::In.ReadToEnd() | ConvertFrom-Json
 } catch {
@@ -12,15 +41,40 @@ if ($payload.toolName) { $calls += [pscustomobject]@{ name = $payload.toolName; 
 elseif ($payload.tool_name) { $calls += [pscustomobject]@{ name = $payload.tool_name; args = $payload.tool_input } }
 if ($payload.toolCalls) { $calls += $payload.toolCalls }
 
+$sessionId = if ($payload.sessionId) { [string]$payload.sessionId } else { [string]$payload.session_id }
+$copilotHome = if ($env:COPILOT_HOME) { $env:COPILOT_HOME } else { Join-Path $env:USERPROFILE '.copilot' }
+# Only root sessions have a session-state directory; subagent calls carry their own agent id.
+$isRoot = $sessionId -and (Test-Path -LiteralPath (Join-Path (Join-Path $copilotHome 'session-state') $sessionId))
+
 foreach ($call in $calls) {
-    if ($call.name -notin @('task', 'Task', 'Agent')) { continue }
     $toolArgs = $call.args
-    if ($toolArgs -is [string]) { try { $toolArgs = $toolArgs | ConvertFrom-Json } catch { $toolArgs = $null } }
-    $agentType = if ($toolArgs) { [string]$toolArgs.agent_type } else { '' }
-    if ($agentType -notin $allowed) {
-        $reason = "Forbidden agent_type '$agentType'. The orchestrator may only delegate to cantrip agents: $($allowed -join ', '). Built-in and default agents are not allowed. Delegate to the matching cantrip role; run verification commands with your own shell tool."
-        @{ permissionDecision = 'deny'; permissionDecisionReason = $reason } | ConvertTo-Json -Compress
-        exit 0
+    if ($toolArgs -is [string]) { try { $toolArgs = $toolArgs | ConvertFrom-Json } catch { } }
+
+    if ($call.name -in @('task', 'Task', 'Agent')) {
+        $agentType = if ($toolArgs -and $toolArgs.PSObject.Properties['agent_type']) { [string]$toolArgs.agent_type } else { '' }
+        if ($agentType -notin $allowedAgents) {
+            Deny "Forbidden agent_type '$agentType'. The orchestrator may only delegate to cantrip agents: $($allowedAgents -join ', '). Built-in and default agents are not allowed. Delegate to the matching cantrip role; run verification commands with your own shell tool."
+        }
+        continue
+    }
+
+    if (-not $isRoot) { continue }
+
+    if ($call.name -in $editTools) {
+        Deny "The orchestrator does not edit files. Delegate this change to a worker with a self-contained assignment (objective, files, governing ADRs, acceptance criteria)."
+    }
+
+    if ($call.name -in $shellTools) {
+        $text = ''
+        if ($toolArgs -is [string]) { $text = $toolArgs }
+        elseif ($toolArgs) {
+            foreach ($key in 'command', 'input') { if ($toolArgs.PSObject.Properties[$key]) { $text += "`n" + [string]$toolArgs.$key } }
+        }
+        foreach ($pattern in $mutating) {
+            if ($text -match $pattern) {
+                Deny "The orchestrator does not run commands that change the repository or environment (matched: '$($Matches[0].Trim())'). Delegate it to a worker. Your own shell use is limited to Archgate preflight and checks, read-only inspection (git status/diff/log/show), and verification in check mode."
+            }
+        }
     }
 }
 exit 0

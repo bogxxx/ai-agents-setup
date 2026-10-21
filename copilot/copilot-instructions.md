@@ -8,4 +8,6 @@ Treat applicable ADRs as project constraints. Cite conflicting decisions and obt
 
 The agent responsible for verification runs `archgate check` after changes, fixes in-scope violations, and distinguishes pre-existing findings. Use `--staged` only when the full intended change is staged; do not stage files merely to run checks. Read-only agents and implementation workers retain their existing execution boundaries and hand verification to the orchestrator.
 
-Report missing CLI, missing project initialization, and failed checks explicitly; do not claim enforcement when it did not run. Do not initialize projects, import ADRs, or change accepted decisions without authorization. Propose recurring lessons as ADR or rule updates rather than silently adopting them.
+Report missing CLI, missing project initialization, and failed checks explicitly; do not claim enforcement when it did not run. Do not initialize projects or import ADRs without authorization.
+
+Close the learning loop. Turn recurring lessons into the layer that enforces them: an executable `.rules.ts` rule, a test, or an ADR. New ADRs, new rules, and clarifying amendments may be made in the branch under review, in their own commit, and listed in the final report. Reversing or materially changing an accepted decision requires an explicit user decision. Never adopt a lesson silently.

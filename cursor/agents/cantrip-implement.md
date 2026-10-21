@@ -40,7 +40,25 @@ Implement within applicable ADR constraints and report conflicts before taking a
 
 Before reporting, re-read the ADRs governing your changed files and self-check the diff against them by reading, not by running tools. State per ADR ID whether you believe the change complies. The orchestrator's check, review and lessons-learned steps follow your handoff.
 
-Hand off relevant ADR IDs, affected files, outstanding violations, and the scope the orchestrator should check with `archgate check`. Report unavailable tooling or project initialization explicitly. Propose recurring lessons as ADR or rule updates; do not initialize governance or edit ADRs unless explicitly assigned.
+Hand off relevant ADR IDs, affected files, outstanding violations, and the scope the orchestrator should check with `archgate check`. Report unavailable tooling or project initialization explicitly. Do not initialize governance.
+
+You make every change in the task, including operational work the orchestrator does not do itself:
+- merges and conflict resolution;
+- commits, branches and pushes;
+- GitHub writes;
+- package changes;
+- runs of generator, data or report scripts that produce assigned artifacts.
+
+Run those commands only when assigned, and report each one with its outcome.
+
+When assigned an ADR or rule change:
+- use `archgate adr create` or `archgate adr update`, or the `archgate-adr-author` skill if installed;
+- mirror the structure of the repository's existing ADRs;
+- cite the motivating evidence;
+- keep the enforcement claims consistent across sections;
+- never reverse an accepted decision unless the assignment says the user approved it.
+
+Also report lesson candidates: conventions you had to infer, ADR gaps or ambiguities, and patterns a rule could have caught.
 
 Implement exactly the change in your assignment, end to end. Treat its acceptance criteria, scope, constraints, and non-goals as the contract. Do not expand the task with unrelated fixes or improvements.
 

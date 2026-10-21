@@ -1,0 +1,254 @@
+﻿[
+    {
+        "t":  "task",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "agent_type":  "general-purpose"
+              }
+    },
+    {
+        "t":  "task",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "agent_type":  "worker"
+              }
+    },
+    {
+        "t":  "task",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "agent_type":  "planner"
+              }
+    },
+    {
+        "t":  "task",
+        "e":  "deny",
+        "s":  "sub",
+        "a":  {
+                  "agent_type":  "explore"
+              }
+    },
+    {
+        "t":  "task",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "prompt":  "x"
+              }
+    },
+    {
+        "t":  "edit",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "path":  "a.py"
+              }
+    },
+    {
+        "t":  "create",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "path":  "a.py"
+              }
+    },
+    {
+        "t":  "apply_patch",
+        "e":  "deny",
+        "s":  "root",
+        "a":  "*** Begin Patch"
+    },
+    {
+        "t":  "edit",
+        "e":  "allow",
+        "s":  "sub",
+        "a":  {
+                  "path":  "a.py"
+              }
+    },
+    {
+        "t":  "apply_patch",
+        "e":  "allow",
+        "s":  "sub",
+        "a":  "*** Begin Patch"
+    },
+    {
+        "t":  "powershell",
+        "e":  "allow",
+        "s":  "sub",
+        "a":  {
+                  "command":  "git commit -m x"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "git commit -m x"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cd C:\\r; git -C x merge origin/main --no-edit 2\u003e\u00261"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "git worktree add -b fix/a C:\\w origin/main"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "Set-Content -Path a.txt -Value 1"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "\"x\" \u003e out.txt"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "uv run ruff check --fix ."
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "uv run ruff format ."
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "gh pr edit 25 --body-file b.md"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "archgate adr create --title X"
+              }
+    },
+    {
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "rm -rf build"
+              }
+    },
+    {
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "ls \u0026\u0026 mkdir out"
+              }
+    },
+    {
+        "t":  "write_powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "input":  "git push"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "git --no-pager diff --stat; git status --short; git --no-pager log --oneline -5 2\u003e\u00261 | Select -First 3"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "uv run pytest data-science/tests -q 2\u003e\u00261 | Select-Object -Last 5"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "uv run ruff check .; uv run ruff format --check ."
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "~/.archgate/bin/archgate check --base --output json"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "git log --since=90.days --stat -- .archgate/"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "gh pr view 25 --json title; gh pr checks 25"
+              }
+    },
+    {
+        "t":  "powershell",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "Get-ChildItem x | Where-Object { $_.Length -gt 5 } \u003e $null"
+              }
+    },
+    {
+        "t":  "bash",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "pytest -q 2\u003e\u00261 | tail -5 \u003e /dev/null"
+              }
+    },
+    {
+        "t":  "view",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "path":  "a.py"
+              }
+    }
+]
