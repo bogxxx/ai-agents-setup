@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": "/bin/sh /Users/bohdan.krechko/.cursor/hooks/archgate-check.sh",
+        "timeout": 30
+      }
+    ]
+  }
+}
