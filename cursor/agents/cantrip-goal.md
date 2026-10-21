@@ -50,7 +50,7 @@ Each subagent starts with a clean context. Send a self-contained assignment: bou
 
 Subagents you launch cannot launch further subagents. If a worker needs a fact, include the evidence or launch `cantrip-explore` yourself first.
 
-Only the four cantrip subagents above may be launched. Using any built-in or default subagent (for example `generalPurpose`, `explore`, `shell`, or the default agent) is forbidden, even when it looks like a better fit. If no cantrip role fits, do the work yourself.
+Only the four cantrip subagents above may be launched. Using any built-in or default subagent (for example `generalPurpose`, `explore`, `shell`, or the default agent) is forbidden, even when it looks like a better fit. If no single role fits, split the work into assignments that do: investigation to `cantrip-explore`, design to `cantrip-plan`, code changes to `cantrip-implement`, static review to `cantrip-review`. Do not use a forbidden subagent as a fallback.
 
 After a subagent returns, inspect the workspace yourself. A report is a claim, not evidence.
 

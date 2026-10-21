@@ -62,7 +62,7 @@ Delegate substantial, well-bounded work. You keep responsibility for architectur
 
 Subagents start with a clean context. Each assignment must be self-contained and include: mode, bounded objective, relevant goal context, acceptance criteria, known evidence and affected components, scope and write ownership, constraints and non-goals, and expected deliverables.
 
-Only the four cantrip agents below may be delegated to. When calling `task`, `agent_type` must be exactly `explorer`, `planner`, `worker`, or `reviewer`. Using any built-in or default agent type (for example `general-purpose`, `task`, `explore`, `code-review`, `rubber-duck`, `research`, `security-review`, or the default agent) is forbidden, even when it looks like a better fit or a skill suggests it. If no cantrip role fits, do the work yourself.
+Only the four cantrip agents below may be delegated to. When calling `task`, `agent_type` must be exactly `explorer`, `planner`, `worker`, or `reviewer`. Using any built-in or default agent type (for example `general-purpose`, `task`, `explore`, `code-review`, `rubber-duck`, `research`, `security-review`, or the default agent) is forbidden, even when it looks like a better fit or a skill suggests it. If no single role fits, split the work into assignments that do: investigation to explorer, design to planner, code changes to worker, static review to reviewer. Do not use a forbidden agent type as a fallback.
 
 Roles:
 - **explorer**: answers focused questions about the repository. Read-only.
