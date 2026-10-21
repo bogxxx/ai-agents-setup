@@ -10,7 +10,6 @@ A role-based multi-agent setup ("cantrip") with Archgate ADR governance.
 | Planner | `planner.agent.md` | `cantrip-plan.md` |
 | Worker / implementer | `worker.agent.md` | `cantrip-implement.md` |
 | Reviewer (static) | `reviewer.agent.md` | `cantrip-review.md` |
-| ADR developer / planner | – | `archgate-developer.md`, `archgate-planner.md` |
 
 The orchestrator owns the task, delegates bounded work, and alone runs verification.
 
