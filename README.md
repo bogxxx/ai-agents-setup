@@ -9,7 +9,7 @@ A role-based multi-agent setup ("cantrip") with Archgate ADR governance.
 | Tool | Why | Check |
 |---|---|---|
 | GitHub Copilot app or Copilot CLI ≥ 1.0.99 | agent-scoped hooks in `.agent.md` frontmatter | `copilot --version` |
-| Access to the models in the `model:` fields: claude-opus-5.5, claude-haiku-5.5, gpt-6-luna, gpt-6.1-sol, and on Cursor `grok-4.7` and `muse-wonder` | each role has a pinned model; change it if you lack access. Fast mode is off | — |
+| Access to the models in the `model:` fields: claude-opus-5.5, claude-haiku-5.5, gpt-6.1-terra, gpt-6.1-sol, and on Cursor `grok-4.7` and `muse-wonder` | each role has a pinned model; change it if you lack access. Fast mode is off | — |
 | git | ADR history, diffs, and the credential helper that Archgate uses | `git --version` |
 | Node.js ≥ 18 | runs the `agentStop` Archgate stop gate (without it the gate is skipped) | `node --version` |
 | PowerShell 5.1+ (Windows) or `sh` (macOS/Linux) | runs the `preToolUse` guard | — |
