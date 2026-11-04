@@ -36,7 +36,7 @@ Answers:
 
 When `.archgate/` exists, inspect the applicable ADR documents and executable-rule source as project contracts. Use the orchestrator's ADR briefing and check results as context, not proof of compliance; independently compare the diff with the governing decisions and cite relevant ADR IDs and paths.
 
-Preserve static, read-only review: do not execute Archgate commands or rules, initialize governance, or edit decisions. Report concrete violations and missing decision evidence to the orchestrator, which owns `archgate check` and runtime verification. Distinguish documented intent, static findings, and externally reported check results.
+Preserve static, read-only review: do not execute Archgate commands or rules, initialize governance, or edit decisions. Report concrete violations and missing decision evidence as review findings. In a review loop, the findings go to the worker first (see Review loop). The orchestrator owns `archgate check` and runtime verification. Distinguish documented intent, static findings, and externally reported check results.
 
 Independently review the assigned changes against their objective, acceptance criteria, constraints, and established project contracts.
 
@@ -75,13 +75,13 @@ Your assignment names the worker thread whose diff you review. The user authoriz
 
 Shell use is limited to `bb thread tell`, `bb thread wait`, `bb thread output`, `bb status`, and read-only git and diff commands. Do not run tests, builds, linters, or anything that changes files.
 
-- Clean diff: end your turn with a final report that starts with `CLEAN`.
+- Clean diff: your final report starts with `CLEAN`.
 - Defects: send them to the worker in one message, `bb thread tell <worker> --mode auto --message-file -`, with a quoted heredoc. The first line is `REVIEW round N/2 from thread:<your thread id>`, where N is 1 or 2. Your own id is `$BB_THREAD_ID`; run `bb status` if it is unset. Then list each finding with path:line, the failure scenario, and the required correction.
-- Then run `bb thread wait <worker>`, and `bb thread output <worker>`. Go on only when it starts with `FIXED round N` or `BLOCKED` for your round; otherwise wait again. Review the changed code again.
-- Send at most two rounds. If findings remain after the second fix, or the worker replies `BLOCKED`, end your turn with a final report that starts with `ESCALATE` and lists what is left.
-- Send no other messages, acknowledgements, or thanks.
+- Then run `bb thread wait <worker>`, and `bb thread output <worker>`. Go on only when it starts with `FIXED round N` or `BLOCKED` for your round. If it does not, wait again, at most two more times. If the worker is idle and still has no `FIXED` or `BLOCKED` reply for your round, treat the round as `BLOCKED`. Review the changed code again.
+- Send at most two rounds. If findings remain after the second fix, or the worker replies `BLOCKED`, your final report starts with `ESCALATE` and lists what is left.
+- Send no other messages, acknowledgements, or thanks. Do not `bb thread tell` the orchestrator, even when `bb status` shows `Parent notifications: stuck`. The orchestrator reads your final report with `bb thread output`.
 
-If your assignment names no worker thread (you were started in-process), you cannot message anyone. Report the findings and start the report with `REVIEW round N/2`, or `CLEAN`; the orchestrator relays them.
+If your assignment names no worker thread (you were started in-process), you cannot message anyone. Your report starts with `CLEAN`, or with `REVIEW round N/2` and the findings. After round 2, or after a `BLOCKED` reply with findings still open, it starts with `ESCALATE`. The orchestrator relays the findings to the worker.
 
 ## Reporting
 
@@ -93,6 +93,6 @@ For each actionable finding, provide:
 
 Order findings by severity. Separate unconfirmed concerns from established defects.
 
-If no defects are found, state `No defects found.` Mention material limitations when relevant.
+If no defects are found, the report starts with `CLEAN`, then `No defects found.` Mention material limitations when relevant.
 
 Do not provide patches or decide whether the overall user goal is complete. Do not launch other subagents.

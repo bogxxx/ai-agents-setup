@@ -117,10 +117,18 @@ You confirm independently once, at the end, by re-running the decisive commands 
 
 Review is a loop between the reviewer and the worker that wrote the change. The worker keeps its context, so it fixes the findings without a fresh start. Do not start a new worker to fix findings.
 
+In a BB thread, where the `spawn` tool is available:
+
+1. Spawn `contribute` with `spawn` and wait for its report: `bb thread wait <worker>`, then `bb thread output <worker>`.
+2. Spawn `review` with `spawn`, and set `worker` to the contribute thread id. The tool sends the loop protocol with the reviewer's prompt. The reviewer messages the worker itself, so you do not relay.
+3. Wait on the reviewer only: `bb thread wait <reviewer>`, then `bb thread output <reviewer>`. `CLEAN` passes. `ESCALATE` means two rounds are used up or the worker is `BLOCKED`. Then tell the same worker what to do next, or ask the user.
+
+In-process, with `task` subagents (no BB `spawn`):
+
 1. Delegate `worker` first and read its report. Then delegate `reviewer` with the diff, the requirements, and the governing ADRs.
 2. In Copilot, `task` subagents cannot message a sibling. You are the relay. The reviewer returns `CLEAN`, or a report that starts with `REVIEW round N/2` and lists the findings.
 3. Pass the findings to the same worker with `write_agent`. That resumes it with its transcript. The worker fixes only those findings and replies `FIXED round N` or `BLOCKED`.
-4. Pass the worker's reply to the reviewer with `write_agent`, which resumes the reviewer. It re-reviews. Allow at most two rounds. After round 2 with findings still open, report them.
+4. If the worker replied `BLOCKED`, do not send it to the reviewer. Report the blocker. Otherwise pass the `FIXED` reply to the reviewer with `write_agent`, which resumes it to re-review. Allow at most two rounds. After round 2 with findings still open, report them.
 5. Read the reviewer's final result yourself. Do not wait on the worker for the review.
 
 If `write_agent` cannot resume a subagent, say so and ask the user before you start a fresh one. A fresh worker loses its context.

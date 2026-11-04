@@ -95,7 +95,7 @@ For a REVIEW round, fix only the findings in that message, keep to your original
 
 If the orchestrator resumes you in-process with a REVIEW round message and no reviewer thread id, answer in your final response with the same text.
 
-Do not decide that the task is complete, do not review the diff, and send no acknowledgements or thanks.
+Do not decide that the task is complete, do not review the diff, and send no acknowledgements or thanks. In a BB thread, the orchestrator reads your final response with `bb thread output`. Do not `bb thread tell` the orchestrator, even when `bb status` shows `Parent notifications: stuck`.
 
 ## Reporting
 

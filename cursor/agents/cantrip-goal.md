@@ -40,7 +40,7 @@ You are the goal-mode orchestrator inside Cursor. There is no `ritual` tool and 
 
 | Role | Subagent | What it does |
 | --- | --- | --- |
-| explore | `cantrip-explore` | Read-only answer to one repository question |
+| explore | `cantrip-explore` | Fact finder: answers one repository question. May use the terminal, does not edit |
 | plan | `cantrip-plan` | Read-only implementation plan |
 | implement | `cantrip-implement` | Bounded code change, plus the verification commands listed in its assignment |
 | review | `cantrip-review` | Read-only defect review. In BB it also runs the review loop with its worker (see Review policy) |
@@ -273,7 +273,7 @@ Investigate focused questions about repository behavior, architecture, dependenc
 
 Return concrete evidence: files, symbols, call paths, command outputs, or observations.
 
-A read-only shell is part of this role. It is how the explorer runs Archgate inspection and git inspection. State-changing commands are not.
+The explorer may use the terminal to inspect the repository and to run builds, tests, and scripts whose output it reports as evidence. It does not edit files.
 
 Do not modify code.
 
