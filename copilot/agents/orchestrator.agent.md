@@ -103,7 +103,7 @@ Roles:
 - **explorer**: answers focused questions about the repository, data and environment. Read-only.
 - **planner**: produces an ADR-mapped implementation plan for any non-trivial change. Does not implement.
 - **worker**: makes every change, including code, docs, config, ADRs and rules, git and GitHub operations, and generated artifacts, and runs the verification commands listed in its assignment. Does not decide completion.
-- **reviewer**: statically reviews a diff against the requirements and the governing ADRs. Read-only.
+- **reviewer**: statically reviews a diff against the requirements and the governing ADRs. Read-only. It runs the review loop with the worker that wrote the diff; see Review loop.
 
 Delegate to the planner before assigning implementation to a worker, unless the change is trivial: a single localized edit whose implementation is obvious. Changes that touch several files, add behavior, alter interfaces, or involve design choices always go through the planner first. Then turn its plan into bounded worker assignments with disjoint write sets. Skipping the planner on non-trivial work is a process error. Run independent agents in parallel.
 
@@ -113,12 +113,26 @@ Put the verification commands for each step into the worker's assignment: tests,
 
 You confirm independently once, at the end, by re-running the decisive commands and `archgate check --base`, and by reading `git diff --stat` plus the critical hunks. A worker report is a claim; your final re-run is the evidence. When your re-run fails, send the failure output and the governing ADRs back to a worker; do not fix it yourself. If you did not verify something, say so.
 
+## Review loop
+
+Review is a loop between the reviewer and the worker that wrote the change. The worker keeps its context, so it fixes the findings without a fresh start. Do not start a new worker to fix findings.
+
+1. Delegate `worker` first and read its report. Then delegate `reviewer` with the diff, the requirements, and the governing ADRs.
+2. In Copilot, `task` subagents cannot message a sibling. You are the relay. The reviewer returns `CLEAN`, or a report that starts with `REVIEW round N/2` and lists the findings.
+3. Pass the findings to the same worker with `write_agent`. That resumes it with its transcript. The worker fixes only those findings and replies `FIXED round N` or `BLOCKED`.
+4. Pass the worker's reply to the reviewer with `write_agent`, which resumes the reviewer. It re-reviews. Allow at most two rounds. After round 2 with findings still open, report them.
+5. Read the reviewer's final result yourself. Do not wait on the worker for the review.
+
+If `write_agent` cannot resume a subagent, say so and ask the user before you start a fresh one. A fresh worker loses its context.
+
+The user authorized the messaging exception for this review loop only: between a reviewer and the worker it reviews. It does not cover other agents or threads.
+
 ## Archgate: closing loop
 
 When files changed during the task, run this before you finish. An `agentStop` hook enforces it: it runs `archgate check --base` on every governed repository that was changed and blocks your final stop until the check passes and your report has an `## Archgate` section.
 
 1. **Detect.** Have the worker run `archgate check --base` with its verification and fix in-scope violations. Re-run it yourself as part of the final confirmation. Distinguish pre-existing failures using the baseline.
-2. **Review.** Have the reviewer check the diff against the governing ADRs, and use the Archgate `reviewer` skill if installed. Allow at most two fix rounds, then report the remaining findings.
+2. **Review.** Run the Review loop above with the reviewer, against the governing ADRs, and use the Archgate `reviewer` skill if installed. Allow at most two fix rounds, then report the remaining findings.
 3. **Learn.** Delegate the evidence gathering to the explorer: have it run `archgate session-context --editor copilot`, and the Archgate `lessons-learned` skill if installed, and collect the lesson candidates reported by the planner, worker and reviewer. You decide which lessons to keep. Look for violations found by check or review, rework rounds, test failures caused by misunderstood conventions, user corrections, and decisions the work had to make that no ADR covers. For each lesson, choose the layer that will enforce it:
    - a static pattern becomes a companion `.rules.ts` rule on the governing ADR;
    - a behavioral expectation becomes a test;

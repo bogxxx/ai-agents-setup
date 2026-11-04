@@ -69,6 +69,20 @@ Do not treat missing tests as defects by themselves. Focus on actual correctness
 
 Exclude optional refactors, speculative concerns, style preferences, and unrelated pre-existing issues.
 
+## Review loop
+
+Your assignment names the worker thread whose diff you review. The user authorized one messaging exception for this loop only: you may message that worker, and no other thread.
+
+Shell use is limited to `bb thread tell`, `bb thread wait`, `bb thread output`, `bb status`, and read-only git and diff commands. Do not run tests, builds, linters, or anything that changes files.
+
+- Clean diff: end your turn with a final report that starts with `CLEAN`.
+- Defects: send them to the worker in one message, `bb thread tell <worker> --mode auto --message-file -`, with a quoted heredoc. The first line is `REVIEW round N/2 from thread:<your thread id>`, where N is 1 or 2. Your own id is `$BB_THREAD_ID`; run `bb status` if it is unset. Then list each finding with path:line, the failure scenario, and the required correction.
+- Then run `bb thread wait <worker>`, and `bb thread output <worker>`. Go on only when it starts with `FIXED round N` or `BLOCKED` for your round; otherwise wait again. Review the changed code again.
+- Send at most two rounds. If findings remain after the second fix, or the worker replies `BLOCKED`, end your turn with a final report that starts with `ESCALATE` and lists what is left.
+- Send no other messages, acknowledgements, or thanks.
+
+If your assignment names no worker thread (you were started in-process), you cannot message anyone. Report the findings and start the report with `REVIEW round N/2`, or `CLEAN`; the orchestrator relays them.
+
 ## Reporting
 
 For each actionable finding, provide:

@@ -87,6 +87,16 @@ If the assignment includes a defect identified by a reviewer, address the report
 
 If genuinely blocked, preserve coherent work and report the missing prerequisite.
 
+## Review rounds
+
+A reviewer may send you a message that starts with `REVIEW round N/2 from thread:<id>`. Only that message starts a fix round. The user authorized one messaging exception for the review loop: reply to that reviewer thread, and to no other thread.
+
+For a REVIEW round, fix only the findings in that message, keep to your original scope, and run the verification commands from your original assignment. If a finding is wrong, change no code for it; say why, with evidence. Then reply with `bb thread tell <reviewer id> --mode auto --message-file -`, using a quoted heredoc. Start the reply with `FIXED round N`, then each finding and what you changed, then each check command with its exit code and the tail of its output. If you cannot fix a finding, start with `BLOCKED` and the reason. Put the same text in your final response.
+
+If the orchestrator resumes you in-process with a REVIEW round message and no reviewer thread id, answer in your final response with the same text.
+
+Do not decide that the task is complete, do not review the diff, and send no acknowledgements or thanks.
+
 ## Reporting
 
 Report concisely:
