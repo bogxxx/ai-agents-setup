@@ -52,9 +52,10 @@ for (const runner of runners) {
       check(runner, `${label} (${variant})`, decide(runner, json), c.e);
     }
   });
-  // E3 relies on the hook seeing BB_THREAD_STORAGE; without it the heredoc write is scanned and denied.
-  const a3 = cases.find((c) => c.id === "A3");
-  check(runner, "A3 without BB_THREAD_STORAGE", decide(runner, payload(a3), { BB_THREAD_STORAGE: undefined }), "deny");
+  // Cases marked storage: "required" reference BB_THREAD_STORAGE on purpose: without it they must be denied.
+  for (const c of cases.filter((x) => x.storage === "required")) {
+    check(runner, `${c.id} without BB_THREAD_STORAGE`, decide(runner, payload(c), { BB_THREAD_STORAGE: undefined }), "deny");
+  }
   // Read budget: with a budget of 2, the third root view is denied; subagent reads are never counted.
   fs.rmSync(stateDir, { recursive: true, force: true });
   const view = JSON.stringify({ sessionId: "root-budget", toolName: "view", toolArgs: { path: "a.py" } });
