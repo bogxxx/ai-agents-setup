@@ -916,5 +916,68 @@
         "a": {
             "command": "& $args[0]"
         }
+    },
+    {
+        "id": "Y1",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "cat > \"$BB_THREAD_STORAGE/a.md\" <<'EOF_BODY'\ntouch guard-review-marker\nEOF_BODY\np=';bb plugin run role-picker spawn plan --assignment-file '\"$BB_THREAD_STORAGE/a.md\"\nsh -s < \"${p##* }\""
+        }
+    },
+    {
+        "id": "Y2",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "cat > \"$BB_THREAD_STORAGE/a.md\" <<'EOF_BODY'\ntouch guard-review-marker\nEOF_BODY\np='\nbb plugin run role-picker spawn plan --assignment-file \"$BB_THREAD_STORAGE/a.md\"'\nsh -s < \"${p##* }\""
+        }
+    },
+    {
+        "id": "Y3",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "p=';bb plugin run role-picker spawn plan --assignment-file \"$BB_THREAD_STORAGE/a.md\"'; sh -s < \"${p##* }\""
+        }
+    },
+    {
+        "id": "Y4",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "cat > \"$BB_THREAD_STORAGE/a.md\" <<'EOF_BODY'\ntouch guard-review-marker\nEOF_BODY\nsh -s < \"$BB_THREAD_STORAGE/a.md\""
+        }
+    },
+    {
+        "id": "Y5",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "x=\"a;bb plugin run role-picker spawn plan --assignment-file \"$BB_THREAD_STORAGE/a.md\"\""
+        }
+    },
+    {
+        "id": "Y6",
+        "t": "powershell",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "$p = ';bb plugin run role-picker spawn plan --assignment-file \"$env:BB_THREAD_STORAGE\\a.md\"'; iex $p"
+        }
+    },
+    {
+        "id": "Y7",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "echo \"a\"; bb plugin run role-picker spawn plan --assignment-file \"$BB_THREAD_STORAGE/a.md\""
+        }
     }
 ]
