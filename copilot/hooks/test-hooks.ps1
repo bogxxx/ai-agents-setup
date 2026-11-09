@@ -9,7 +9,13 @@ $fakeHome = Join-Path ([IO.Path]::GetTempPath()) ("cantrip-hooktest-" + [guid]::
 New-Item -ItemType Directory -Force ([IO.Path]::Combine($fakeHome, 'session-state', 'root-session')) | Out-Null
 $env:COPILOT_HOME = $fakeHome
 $env:CANTRIP_STATE_DIR = [IO.Path]::Combine($fakeHome, 'guard-state')
+$storage = [IO.Path]::Combine($fakeHome, 'storage')
+New-Item -ItemType Directory -Force $storage | Out-Null
+$env:BB_THREAD_STORAGE = $storage
 New-Item -ItemType Directory -Force ([IO.Path]::Combine($fakeHome, 'session-state', 'root-budget')) | Out-Null
+$storage = [IO.Path]::Combine($fakeHome, 'storage')
+New-Item -ItemType Directory -Force $storage | Out-Null
+$env:BB_THREAD_STORAGE = $storage
 
 $psHost = (Get-Process -Id $PID).Path
 $runners = @(@{ name = 'ps1'; run = { param($json) $json | & $psHost -NoProfile -ExecutionPolicy Bypass -File (Join-Path $here 'cantrip-agent-guard.ps1') } })
@@ -36,9 +42,15 @@ foreach ($runner in $runners) {
         $got = if ("$out" -match '"permissionDecision":\s*"deny"') { 'deny' } else { 'allow' }
         if ($got -ne $case.e) {
             $failures++
-            Write-Output ("FAIL [{0}] expected {1}, got {2}: {3}" -f $runner.name, $case.e, $got, $json)
+            Write-Output ("FAIL [{0}] {1} expected {2}, got {3}: {4}" -f $runner.name, $case.id, $case.e, $got, $json)
         }
     }
+    # The thread-storage heredoc is only exempt when the hook sees BB_THREAD_STORAGE.
+    $a3 = $cases | Where-Object { $_.id -eq 'A3' }
+    $json = @{ sessionId = 'root-session'; toolName = $a3.t; toolArgs = $a3.a } | ConvertTo-Json -Compress -Depth 5
+    Remove-Item Env:BB_THREAD_STORAGE
+    if ("$(& $runner.run $json)" -notmatch '"permissionDecision":\s*"deny"') { $failures++; Write-Output ("FAIL [{0}] A3 without BB_THREAD_STORAGE was allowed" -f $runner.name) }
+    $env:BB_THREAD_STORAGE = $storage
     # Read budget: with a budget of 2, the third root view is denied; subagent reads are never counted.
     $env:CANTRIP_READ_BUDGET = '2'
     Remove-Item -Recurse -Force $env:CANTRIP_STATE_DIR -ErrorAction SilentlyContinue
@@ -48,7 +60,14 @@ foreach ($runner in $runners) {
     if (($got -join ',') -ne 'allow,allow,allow,deny') { $failures++; Write-Output ("FAIL [{0}] read budget: {1}" -f $runner.name, ($got -join ',')) }
     Remove-Item Env:CANTRIP_READ_BUDGET
     Remove-Item -Recurse -Force $env:CANTRIP_STATE_DIR -ErrorAction SilentlyContinue
-    Write-Output ("[{0}] {1} cases run, plus the read budget" -f $runner.name, $cases.Count)
+    # The heredoc write to thread storage is exempt only when the hook sees BB_THREAD_STORAGE; without it, it is denied.
+    $a3 = $cases | Where-Object { $_.id -eq 'A3' }
+    $storageValue = $env:BB_THREAD_STORAGE
+    Remove-Item Env:BB_THREAD_STORAGE
+    $json = @{ sessionId = 'root-session'; toolName = $a3.t; toolArgs = $a3.a } | ConvertTo-Json -Compress -Depth 5
+    if ("$(& $runner.run $json)" -notmatch '"permissionDecision":\s*"deny"') { $failures++; Write-Output ("FAIL [{0}] A3 without BB_THREAD_STORAGE must be denied" -f $runner.name) }
+    $env:BB_THREAD_STORAGE = $storageValue
+    Write-Output ("[{0}] {1} cases run, plus the read budget and the unset-storage check" -f $runner.name, $cases.Count)
 }
 
 $node = Get-Command node -ErrorAction SilentlyContinue
