@@ -763,5 +763,50 @@
         "a": {
             "command": "x=\"$BB_THREAD_STORAGE\""
         }
+    },
+    {
+        "id": "R13",
+        "t": "powershell",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "Write-Output \"a`\"\n@'\ngit push origin\n'@ | bb plugin run role-picker ask --questions-stdin\n\""
+        }
+    },
+    {
+        "id": "R14",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "cat > \"$BB_THREAD_STORAGE/a.md\" <<'EOF'\ngit push\nEOF\nset -- --assignment-file \"$BB_THREAD_STORAGE/a.md\"\nsh \"$2\""
+        }
+    },
+    {
+        "id": "R15",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "bb()\n{\nsh \"$2\"\n}\nbb plugin run role-picker ask --questions-stdin <<'EOF'\ngit push\nEOF"
+        }
+    },
+    {
+        "id": "R16",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "bb plugin run role-picker spawn explore --assignment-file \"$BB_THREAD_STORAGE/a.md\" && sh \"$BB_THREAD_STORAGE/a.md\""
+        }
+    },
+    {
+        "id": "R17",
+        "t": "powershell",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "$a = @('--assignment-file', \"$env:BB_THREAD_STORAGE\\a.md\"); & $a[1]"
+        }
     }
 ]

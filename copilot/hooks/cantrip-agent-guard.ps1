@@ -33,7 +33,7 @@ $mutating = @(
     '(?i)BB_THREAD_STORAGE[^;&\r\n]*\|[ \t]*(sh|bash|zsh|dash|ksh|pwsh|powershell|iex|invoke-expression)([^a-z]|$)',
     '(?im)(^|[^a-z])(alias|function|hash)[ \t]',
     '(?im)(^|[^a-z])export[ \t]+-f\b',
-    '\(\)[ \t]*\{',
+    '\([ \t]*\)',
     '(?im)(^|[ ;&|(])PATH=',
     '(?i)\$env:PATH\s*=',
     '(?i)\b(Set-Alias|New-Alias|Set-Item)\b'
@@ -78,7 +78,7 @@ function Get-GuardScanText([string]$text, [bool]$shForms, [bool]$psForms, [bool]
             if ($storeOk -and $head -cmatch $e3sh -and $head -notmatch '\.\.') { $buf.Clear(); $buf.Add($line); $st = 1; continue }
         }
         $count = { param($pattern) ([regex]::Matches($line, $pattern)).Count }
-        if ($line -match '<<|\\|`$' -or (& $count "'") % 2 -or (& $count '"') % 2 -or (& $count '`') % 2 -or (& $count '\(') -ne (& $count '\)')) { $bad = $true }
+        if ($line -match '<<|\\|`' -or (& $count "'") % 2 -or (& $count '"') % 2 -or (& $count '`') % 2 -or (& $count '\(') -ne (& $count '\)')) { $bad = $true }
         $out.Add($line)
     }
     if ($st) { $out.AddRange($buf) }
@@ -156,7 +156,7 @@ foreach ($call in $calls) {
                 Deny "The orchestrator does not run commands that change the repository or environment (matched: '$($Matches[0].Trim())'). Delegate it to a worker. Your own shell use is limited to Archgate preflight and checks, read-only inspection (git status/diff/log/show), and verification in check mode. $assignmentHint"
             }
         }
-        $left = $scan -replace '(?i)--assignment-file[ \t]+"\$\{?(env:)?BB_THREAD_STORAGE\}?[\\/][a-z0-9_$][a-z0-9._$-]*\.(md|txt)"', ''
+        $left = $scan -replace '(?im)(^|[^a-z0-9_-])(bb[ \t]+plugin[ \t]+run[ \t]+role-picker[ \t]+spawn)([^;&|$`()"]*)--assignment-file[ \t]+"\$\{?(env:)?BB_THREAD_STORAGE\}?[\\/][a-z0-9_$][a-z0-9._$-]*\.(md|txt)"', '$1$2$3'
         if ($left -match '(?i)BB_THREAD_STORAGE|thread-storage') {
             Deny "The orchestrator does not run commands that change the repository or environment (matched: 'BB_THREAD_STORAGE'). Thread storage may only be read, never redefined. $assignmentHint"
         }

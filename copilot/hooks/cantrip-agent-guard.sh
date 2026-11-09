@@ -69,7 +69,7 @@ scan_awk='
 function flush(  i) { for (i = 1; i <= n; i++) print buf[i]; n = 0 }
 function count(s, re,  t) { t = s; return gsub(re, "", t) }
 function taints(s) {
-  if (s ~ /<</ || s ~ /\\/ || s ~ /`$/) return 1
+  if (s ~ /<</ || s ~ /\\/ || s ~ /`/) return 1
   if (count(s, q) % 2 || count(s, "\"") % 2 || count(s, "`") % 2) return 1
   return count(s, "\\(") != count(s, "\\)")
 }
@@ -135,12 +135,12 @@ if matches '(^|[^a-z])black[[:space:]]' && ! matches 'black[^;|]*--check'; then 
 stripped=$(printf '%s\n' "$scan" | sed -E 's/[0-9&*]?>>?[[:space:]]*(&[0-9]|\/dev\/null|\$null|[Nn][Uu][Ll])//g; s/(=|-)>//g')
 printf '%s\n' "$stripped" | grep -E '>' >/dev/null && mutating=1
 # Thread storage is writable through the heredoc form above, so it may only be read: never redefined or executed.
-left=$(printf '%s\n' "$scan" | tr 'A-Z' 'a-z' | sed -E 's/--assignment-file[[:space:]]+"\$\{?(env:)?bb_thread_storage\}?[\\/][a-z0-9_$][a-z0-9._$-]*\.(md|txt)"//g')
+left=$(printf '%s\n' "$scan" | tr 'A-Z' 'a-z' | sed -E 's/(^|[^a-z0-9_-])bb[[:space:]]+plugin[[:space:]]+run[[:space:]]+role-picker[[:space:]]+spawn([^;&|$`()"]*)--assignment-file[[:space:]]+"\$\{?(env:)?bb_thread_storage\}?[\\/][a-z0-9_$][a-z0-9._$-]*\.(md|txt)"/\1bb plugin run role-picker spawn\2/g')
 printf '%s\n' "$left" | grep -E 'bb_thread_storage|thread-storage' >/dev/null && mutating=1
 # Aliases, functions, PATH changes and exported functions could rebind bb, cat or sh to something else.
 matches '(^|[^a-z])(alias|function|hash)[[:space:]]' && mutating=1
 matches '(^|[^a-z])export[[:space:]]+-f' && mutating=1
-matches '\(\)[[:space:]]*\{' && mutating=1
+matches '\([[:space:]]*\)' && mutating=1
 matches '(^|[ ;&|(])PATH=' && mutating=1
 matches '\$env:PATH[[:space:]]*=' && mutating=1
 matches '\$env:bb_thread_storage[[:space:]]*=' && mutating=1
