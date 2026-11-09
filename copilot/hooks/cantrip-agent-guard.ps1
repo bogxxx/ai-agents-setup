@@ -24,8 +24,60 @@ $mutating = @(
     '\bruff\s+format\b(?![^;|\r\n]*--(check|diff))',
     '\bblack\b(?![^;|\r\n]*--check)',
     '\b(uv\s+(add|remove|lock)|uv\s+pip\s+install|pip3?\s+install|npm\s+(install|i|ci|uninstall|update)|pnpm\s+(add|install|remove)|yarn\s+(add|install|remove)|bun\s+(add|install|remove))\b',
-    '\barchgate\b[^;|\r\n]*\s(init|adr\s+(create|update|import))\b'
+    '\barchgate\b[^;|\r\n]*\s(init|adr\s+(create|update|import))\b',
+    # Thread storage is writable through the here-string form below, so it may only be read: never redefined or executed.
+    '(?i)\$env:BB_THREAD_STORAGE\s*=',
+    '(?im)(^|[^a-z0-9_-])(sh|bash|zsh|dash|ksh|source|eval|exec|python3?|node|perl|ruby|pwsh|powershell|iex|invoke-expression)[ \t][^;|&\r\n]*BB_THREAD_STORAGE',
+    '(?im)(^|[;&|(])[ \t]*\.[ \t]+[^;|&\r\n]*BB_THREAD_STORAGE',
+    '(?im)(^|[;&|(])[ \t]*(&[ \t]*)?"?\$\{?(env:)?BB_THREAD_STORAGE',
+    '(?i)BB_THREAD_STORAGE[^;&\r\n]*\|[ \t]*(sh|bash|zsh|dash|ksh|pwsh|powershell|iex|invoke-expression)([^a-z]|$)'
 )
+$assignmentHint = 'To hand over an assignment, write it with cat > "$BB_THREAD_STORAGE/<name>.md" <<''EOF'', the text, then EOF on its own line, then run bb plugin run role-picker spawn <role> --assignment-file "$BB_THREAD_STORAGE/<name>.md".'
+
+# Data that never runs is not scanned: the body of a quoted heredoc piped into role-picker (spawn/ask),
+# and a quoted heredoc written to "$BB_THREAD_STORAGE/<name>.md|txt". Bash forms apply to the bash tool,
+# PowerShell here-strings to the powershell tool. Headers and every other line are scanned; anything
+# that does not parse exactly (or follows an unbalanced quote, paren, continuation or other heredoc) is scanned.
+# Keep in step with the awk program in cantrip-agent-guard.sh.
+function Get-GuardScanText([string]$text, [bool]$shForms, [bool]$psForms, [bool]$storeOk) {
+    $args_ = '([ \t][^;&|<>$`()#''"\\]*)?$'
+    $rp = 'bb[ \t]+plugin[ \t]+run[ \t]+role-picker[ \t]+(spawn|ask)' + $args_
+    $e1sh = '^[ \t]*' + $rp
+    $e3sh = '^[ \t]*cat[ \t]+>[ \t]*"\$BB_THREAD_STORAGE/[A-Za-z0-9_][A-Za-z0-9._-]*\.(md|txt)"[ \t]*$'
+    $e1ps = '^\|[ \t]*' + $rp
+    $e3ps = '^\|[ \t]*set-content[ \t]+-literalpath[ \t]+"\$env:bb_thread_storage\\[a-z0-9_][a-z0-9._-]*\.(md|txt)"([ \t]+-encoding[ \t]+utf8)?[ \t]*$'
+    $out = New-Object System.Collections.Generic.List[string]
+    $buf = New-Object System.Collections.Generic.List[string]
+    $st = 0; $tag = ''; $bad = $false
+    foreach ($line in (($text -replace "`r", '') -split "`n")) {
+        if ($st -eq 1) {
+            if ($line -ceq $tag) { $st = 0; $buf.Clear() } else { $buf.Add($line) }
+            continue
+        }
+        if ($st -eq 2) {
+            if (-not $line.StartsWith("'@")) { $buf.Add($line); continue }
+            $st = 0
+            $rest = $line.Substring(2).ToLowerInvariant() -replace '^[ \t]+', ''
+            if ($rest -cmatch $e1ps) { $buf.Clear(); $out.Add($rest.Substring(1)); continue }
+            if ($storeOk -and $rest -cmatch $e3ps) { $buf.Clear(); continue }
+            $out.AddRange($buf); $buf.Clear(); $out.Add($line); $bad = $true; continue
+        }
+        if (-not $bad -and $psForms -and ($line -replace '^[ \t]+|[ \t]+$', '') -ceq "@'") {
+            $buf.Clear(); $buf.Add($line); $st = 2; continue
+        }
+        if (-not $bad -and $shForms -and $line -cmatch '<<[ \t]*''([A-Za-z_][A-Za-z0-9_]*)''[ \t]*$') {
+            $head = $line.Substring(0, $line.Length - $Matches[0].Length)
+            $tag = $Matches[1]
+            if ($head -cmatch $e1sh) { $out.Add($head); $buf.Clear(); $st = 1; continue }
+            if ($storeOk -and $head -cmatch $e3sh -and $head -notmatch '\.\.') { $buf.Clear(); $buf.Add($line); $st = 1; continue }
+        }
+        $count = { param($pattern) ([regex]::Matches($line, $pattern)).Count }
+        if ($line -match '<<|\\$|`$' -or (& $count "'") % 2 -or (& $count '"') % 2 -or (& $count '`') % 2 -or (& $count '\(') -ne (& $count '\)')) { $bad = $true }
+        $out.Add($line)
+    }
+    if ($st) { $out.AddRange($buf) }
+    return ($out -join "`n")
+}
 
 function Deny([string]$reason) {
     @{ permissionDecision = 'deny'; permissionDecisionReason = $reason } | ConvertTo-Json -Compress
@@ -86,10 +138,17 @@ foreach ($call in $calls) {
         elseif ($toolArgs) {
             foreach ($key in 'command', 'input') { if ($toolArgs.PSObject.Properties[$key]) { $text += "`n" + [string]$toolArgs.$key } }
         }
+        $shForms = $call.name -cin @('bash', 'Bash')
+        $psForms = $call.name -ceq 'powershell'
+        $scan = Get-GuardScanText $text $shForms $psForms ([bool]$env:BB_THREAD_STORAGE)
         foreach ($pattern in $mutating) {
-            if ($text -match $pattern) {
-                Deny "The orchestrator does not run commands that change the repository or environment (matched: '$($Matches[0].Trim())'). Delegate it to a worker. Your own shell use is limited to Archgate preflight and checks, read-only inspection (git status/diff/log/show), and verification in check mode."
+            if ($scan -match $pattern) {
+                Deny "The orchestrator does not run commands that change the repository or environment (matched: '$($Matches[0].Trim())'). Delegate it to a worker. Your own shell use is limited to Archgate preflight and checks, read-only inspection (git status/diff/log/show), and verification in check mode. $assignmentHint"
             }
+        }
+        $left = $scan -replace '(?i)\$\{BB_THREAD_STORAGE\}', '' -replace '(?i)\$(env:)?BB_THREAD_STORAGE(?![A-Za-z0-9_])', ''
+        if ($left -match '(?i)BB_THREAD_STORAGE') {
+            Deny "The orchestrator does not run commands that change the repository or environment (matched: 'BB_THREAD_STORAGE'). Thread storage may only be read, never redefined. $assignmentHint"
         }
     }
 }

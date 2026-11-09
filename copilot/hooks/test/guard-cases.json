@@ -250,5 +250,410 @@
         "a":  {
                   "path":  "a.py"
               }
+    },
+    {
+        "id":  "A1",
+        "t":  "bash",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "bb plugin run role-picker ask --questions-stdin \u003c\u003c\u0027EOF\u0027\n{\"questions\":[{\"question\":\"Keep \u003e= 2 \u003cprefix\u003e runs? git commit -m x, archgate adr create, GitHub label add\",\"header\":\"Q\",\"options\":[{\"label\":\"Yes\",\"description\":\"it\u0027s fine\"}]}]}\nEOF"
+              }
+    },
+    {
+        "id":  "A2",
+        "t":  "bash",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "bb plugin run role-picker spawn plan --assignment-stdin \u003c\u003c\u0027EOF\u0027\nMove x; cp a b \u003e= 2\nEOF"
+              }
+    },
+    {
+        "id":  "A3",
+        "t":  "bash",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e \"$BB_THREAD_STORAGE/explore-gov.md\" \u003c\u003c\u0027EOF\u0027\nMove the guard\ncp a b\nrm -rf build\ngit commit -m x\narchgate adr create\nx \u003e= 3\n\u003cprefix\u003e\nit\u0027s black magic\n$(rm -rf /)\n  EOF\nEOF\nbb plugin run role-picker spawn explore --assignment-file \"$BB_THREAD_STORAGE/explore-gov.md\""
+              }
+    },
+    {
+        "id":  "A4",
+        "t":  "bash",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e \"$BB_THREAD_STORAGE/explore-gov.md\" \u003c\u003c\u0027EOF\u0027\nMove the guard\ncp a b\nrm -rf build\ngit commit -m x\narchgate adr create\nx \u003e= 3\n\u003cprefix\u003e\nit\u0027s black magic\n$(rm -rf /)\n  EOF\nEOF\nbb plugin run role-picker spawn explore --assignment-file \"$BB_THREAD_STORAGE/explore-gov.md\"\ncat \u003e \"$BB_THREAD_STORAGE/b.md\" \u003c\u003c\u0027EOF\u0027\nSecond one, it\u0027s black.\nEOF\nfor n in explore-gov b; do bb plugin run role-picker spawn explore --assignment-file \"$BB_THREAD_STORAGE/$n.md\" --worker thr_1; done"
+              }
+    },
+    {
+        "id":  "A5",
+        "t":  "powershell",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "@\u0027\n{\"questions\":[{\"question\":\"Keep \u003e= 2 \u003cprefix\u003e runs? git commit -m x, archgate adr create, GitHub label add\",\"header\":\"Q\",\"options\":[{\"label\":\"Yes\",\"description\":\"it\u0027s fine\"}]}]}\n\u0027@ | bb plugin run role-picker ask --questions-stdin"
+              }
+    },
+    {
+        "id":  "A6",
+        "t":  "powershell",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "@\u0027\nRun Remove-Item x, then git push; it\u0027s done.\n\u0027@ | Set-Content -LiteralPath \"$env:BB_THREAD_STORAGE\\plan-a.md\" -Encoding utf8\nbb plugin run role-picker spawn plan --assignment-file \"$env:BB_THREAD_STORAGE\\plan-a.md\""
+              }
+    },
+    {
+        "id":  "A7",
+        "t":  "bash",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "bb plugin run role-picker spawn review --assignment-file x.md --worker thr_1\nbb thread output thr_1\necho \"$BB_THREAD_STORAGE\""
+              }
+    },
+    {
+        "id":  "D1",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "bb plugin run role-picker spawn explore --assignment-file a.md; rm -rf foo"
+              }
+    },
+    {
+        "id":  "D2",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e \"$BB_THREAD_STORAGE/explore-gov.md\" \u003c\u003c\u0027EOF\u0027\nMove the guard\ncp a b\nrm -rf build\ngit commit -m x\narchgate adr create\nx \u003e= 3\n\u003cprefix\u003e\nit\u0027s black magic\n$(rm -rf /)\n  EOF\nEOF\nbb plugin run role-picker spawn explore --assignment-file \"$BB_THREAD_STORAGE/explore-gov.md\"\nrm -rf src"
+              }
+    },
+    {
+        "id":  "D3",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "bash \u003c\u003c\u0027EOF\u0027\nrm x\nEOF"
+              }
+    },
+    {
+        "id":  "D4",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e src/file.py \u003c\u003c\u0027EOF\u0027\nprint(1)\nEOF"
+              }
+    },
+    {
+        "id":  "D5",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e \"$BB_THREAD_STORAGE/../repo/a.md\" \u003c\u003c\u0027EOF\u0027\nx\nEOF"
+              }
+    },
+    {
+        "id":  "D6a",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e \"$BB_THREAD_STORAGE/sub/a.md\" \u003c\u003c\u0027EOF\u0027\nx\nEOF"
+              }
+    },
+    {
+        "id":  "D6b",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e \"$HOME/a.md\" \u003c\u003c\u0027EOF\u0027\nx\nEOF"
+              }
+    },
+    {
+        "id":  "D6c",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e /tmp/a.md \u003c\u003c\u0027EOF\u0027\nx\nEOF"
+              }
+    },
+    {
+        "id":  "D7",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e \"$BB_THREAD_STORAGE/a.md\" \u003c\u003cEOF\nx\nEOF"
+              }
+    },
+    {
+        "id":  "D8",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e\u003e \"$BB_THREAD_STORAGE/a.md\" \u003c\u003c\u0027EOF\u0027\nx\nEOF"
+              }
+    },
+    {
+        "id":  "D9",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e \"$BB_THREAD_STORAGE/a.py\" \u003c\u003c\u0027EOF\u0027\nx\nEOF"
+              }
+    },
+    {
+        "id":  "D10",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e \"$BB_THREAD_STORAGE/a.md\" \u003c\u003c\u0027EOF\u0027\nEOF\nrm -rf src\nEOF"
+              }
+    },
+    {
+        "id":  "D11",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e \"$BB_THREAD_STORAGE/a.md\" \u003c\u003c\u0027EOF\u0027\nthen git push"
+              }
+    },
+    {
+        "id":  "D11b",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "bb plugin run role-picker ask --questions-stdin \u003c\u003c\u0027EOF\u0027\ngit push"
+              }
+    },
+    {
+        "id":  "D12",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "bb plugin run role-picker spawn plan --assignment \"$(cat \u003c\u003c\u0027EOF\u0027\nuse archgate adr create\nEOF\n)\""
+              }
+    },
+    {
+        "id":  "D12b",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "bb plugin run role-picker spawn plan --assignment \"$(rm -rf src)\""
+              }
+    },
+    {
+        "id":  "D13",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "bb plugin run role-picker ask --questions-stdin \u003c\u003c\u0027EOF\u0027 | sh\nrm -rf x\nEOF"
+              }
+    },
+    {
+        "id":  "D14",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cd src \u0026\u0026 bb plugin run role-picker ask --questions-stdin \u003c\u003c\u0027EOF\u0027\ngit commit -m x\nEOF"
+              }
+    },
+    {
+        "id":  "D15a",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "export BB_THREAD_STORAGE=src"
+              }
+    },
+    {
+        "id":  "D15b",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "BB_THREAD_STORAGE=. cat \u003e \"$BB_THREAD_STORAGE/a.md\" \u003c\u003c\u0027EOF\u0027\nx\nEOF"
+              }
+    },
+    {
+        "id":  "D15c",
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "$env:BB_THREAD_STORAGE = \u0027C:\\r\u0027"
+              }
+    },
+    {
+        "id":  "D15d",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "echo \"${BB_THREAD_STORAGE:=src}\""
+              }
+    },
+    {
+        "id":  "D16a",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "sh \"$BB_THREAD_STORAGE/a.md\""
+              }
+    },
+    {
+        "id":  "D16b",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  ". \"$BB_THREAD_STORAGE/a.md\""
+              }
+    },
+    {
+        "id":  "D16c",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "\"$BB_THREAD_STORAGE/a.md\""
+              }
+    },
+    {
+        "id":  "D16d",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \"$BB_THREAD_STORAGE/a.md\" | bash"
+              }
+    },
+    {
+        "id":  "D16e",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "eval \"$(cat \"$BB_THREAD_STORAGE/a.md\")\""
+              }
+    },
+    {
+        "id":  "D17",
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "@\u0027\nrm -rf x\n\u0027@ | powershell -Command -"
+              }
+    },
+    {
+        "id":  "D18",
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "@\u0027\nx\n\u0027@ | Set-Content -LiteralPath \"C:\\repo\\a.py\""
+              }
+    },
+    {
+        "id":  "D19",
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "@\u0027\nx\n\u0027@ | Set-Content -LiteralPath \"$env:BB_THREAD_STORAGE\\a.md\"; Remove-Item x"
+              }
+    },
+    {
+        "id":  "D20",
+        "t":  "bash",
+        "e":  "allow",
+        "s":  "root",
+        "a":  {
+                  "command":  "cat \u003e \"$BB_THREAD_STORAGE/explore-gov.md\" \u003c\u003c\u0027EOF\u0027\r\nMove the guard\r\ncp a b\r\nrm -rf build\r\ngit commit -m x\r\narchgate adr create\r\nx \u003e= 3\r\n\u003cprefix\u003e\r\nit\u0027s black magic\r\n$(rm -rf /)\r\n  EOF\r\nEOF\r\nbb plugin run role-picker spawn explore --assignment-file \"$BB_THREAD_STORAGE/explore-gov.md\""
+              }
+    },
+    {
+        "id":  "D21",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "echo \"\nbb plugin run role-picker ask --questions-stdin \u003c\u003c\u0027EOF\u0027\n\" ; rm -rf src\nEOF"
+              }
+    },
+    {
+        "id":  "D22",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "bb plugin run role-picker ask --questions-stdin # x \u003c\u003c\u0027EOF\u0027\nrm -rf src\nEOF"
+              }
+    },
+    {
+        "id":  "D23",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "bash \u003c\u003cX\nbb plugin run role-picker ask --questions-stdin \u003c\u003c\u0027EOF\u0027\n$(rm -rf src)\nEOF\nX"
+              }
+    },
+    {
+        "id":  "D24",
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "@\u0027\nrm -rf x\n  \u0027@ | bb plugin run role-picker ask --questions-stdin\n\u0027@ | powershell -Command -"
+              }
+    },
+    {
+        "id":  "D25",
+        "t":  "bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "@\u0027\nit\u0027s; rm -rf src; echo \u0027\n\u0027@ | bb plugin run role-picker ask --questions-stdin"
+              }
+    },
+    {
+        "id":  "D26",
+        "t":  "powershell",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "command":  "iex `\n@\u0027\nrm -rf x\n\u0027@ | bb plugin run role-picker ask --questions-stdin"
+              }
+    },
+    {
+        "id":  "D27",
+        "t":  "write_bash",
+        "e":  "deny",
+        "s":  "root",
+        "a":  {
+                  "input":  "bb plugin run role-picker ask --questions-stdin \u003c\u003c\u0027EOF\u0027\ngit push\nEOF"
+              }
     }
 ]

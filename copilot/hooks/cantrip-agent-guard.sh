@@ -51,11 +51,69 @@ fi
 
 has_name 'powershell|bash|write_powershell|write_bash|Bash' || exit 0
 
+# JSON-decode the command; an escaped backslash is parked on \001 so that "\\n" or "C:\\repo" keep their backslash.
+bs=$(printf '\001')
+tab=$(printf '\t')
 text=$(printf '%s' "$compact" | grep -oE '"(command|input)":"([^"\\]|\\.)*"' | sed 's/^"[a-z]*":"//; s/"$//' \
-  | sed 's/\\u003[eE]/>/g; s/\\u003[cC]/</g; s/\\u0026/\&/g; s/\\u0027/'"'"'/g; s/\\n/\
-/g; s/\\"/"/g; s/\\\\/\\/g')
+  | sed 's/\\\\/'"$bs"'/g; s/\\u003[eE]/>/g; s/\\u003[cC]/</g; s/\\u0026/\&/g; s/\\u0027/'"'"'/g; s/\\r//g; s/\\t/'"$tab"'/g; s/\\n/\
+/g; s/\\"/"/g; s/'"$bs"'/\\/g')
 
-matches() { printf '%s\n' "$text" | grep -iE "$1" >/dev/null; }
+# Data that never runs is not scanned: the body of a quoted heredoc piped into role-picker (spawn/ask),
+# and a quoted heredoc written to "$BB_THREAD_STORAGE/<name>.md|txt". Bash forms apply to the bash tool,
+# PowerShell here-strings to the powershell tool. Headers and every other line are scanned; anything
+# that does not parse exactly (or follows an unbalanced quote, paren, continuation or other heredoc) is scanned.
+sh_forms=0; ps_forms=0
+if has_name 'bash|Bash' && ! has_name 'powershell|write_powershell|write_bash'; then sh_forms=1; fi
+if has_name 'powershell' && ! has_name 'bash|Bash|write_bash|write_powershell'; then ps_forms=1; fi
+scan_awk='
+function flush(  i) { for (i = 1; i <= n; i++) print buf[i]; n = 0 }
+function count(s, re,  t) { t = s; return gsub(re, "", t) }
+function taints(s) {
+  if (s ~ /<</ || s ~ /\\$/ || s ~ /`$/) return 1
+  if (count(s, q) % 2 || count(s, "\"") % 2 || count(s, "`") % 2) return 1
+  return count(s, "\\(") != count(s, "\\)")
+}
+BEGIN {
+  q = "\047"
+  tagre = "<<[ \t]*" q "[A-Za-z_][A-Za-z0-9_]*" q "[ \t]*$"
+  args = "([ \t][^;&|<>$`()#" q "\"\\\\]*)?$"
+  rp = "bb[ \t]+plugin[ \t]+run[ \t]+role-picker[ \t]+(spawn|ask)" args
+  e1sh = "^[ \t]*" rp
+  e3sh = "^[ \t]*cat[ \t]+>[ \t]*\"\\$BB_THREAD_STORAGE/[A-Za-z0-9_][A-Za-z0-9._-]*\\.(md|txt)\"[ \t]*$"
+  e1ps = "^\\|[ \t]*" rp
+  e3ps = "^\\|[ \t]*set-content[ \t]+-literalpath[ \t]+\"\\$env:bb_thread_storage\\\\[a-z0-9_][a-z0-9._-]*\\.(md|txt)\"([ \t]+-encoding[ \t]+utf8)?[ \t]*$"
+}
+st == 1 {
+  if ($0 == tag) { st = 0; n = 0 } else buf[++n] = $0
+  next
+}
+st == 2 {
+  if (substr($0, 1, 2) != q "@") { buf[++n] = $0; next }
+  st = 0
+  rest = tolower(substr($0, 3)); sub(/^[ \t]+/, "", rest)
+  if (rest ~ e1ps) { n = 0; print substr(rest, 2); next }
+  if (store && rest ~ e3ps) { n = 0; next }
+  flush(); print; bad = 1; next
+}
+{
+  if (!bad && ps) {
+    s = $0; gsub(/^[ \t]+|[ \t]+$/, "", s)
+    if (s == "@" q) { n = 0; buf[++n] = $0; st = 2; next }
+  }
+  if (!bad && sh && match($0, tagre)) {
+    head = substr($0, 1, RSTART - 1)
+    tag = substr($0, RSTART + 2); sub(/^[ \t]*/, "", tag); tag = substr(tag, 2); sub(q "[ \t]*$", "", tag)
+    if (head ~ e1sh) { print head; n = 0; st = 1; next }
+    if (store && head ~ e3sh && head !~ /\.\./) { n = 0; buf[++n] = $0; st = 1; next }
+  }
+  if (taints($0)) bad = 1
+  print
+}
+END { if (st) flush() }
+'
+scan=$(printf '%s\n' "$text" | awk -v sh="$sh_forms" -v ps="$ps_forms" -v store="${BB_THREAD_STORAGE:+1}" "$scan_awk")
+
+matches() { printf '%s\n' "$scan" | grep -iE "$1" >/dev/null; }
 
 mutating=0
 matches '(^|[^a-z])git[^;|&]*[[:space:]](commit|merge|rebase|cherry-pick|revert|push|pull|reset|restore|checkout|switch|stash|am|apply|add|rm|mv|clean|tag|init|clone)([^a-z-]|$)' && mutating=1
@@ -73,10 +131,19 @@ matches '(^|[^a-z])archgate[^;|]*[[:space:]](init|adr[[:space:]]+(create|update|
 if matches '(^|[^a-z])ruff[[:space:]]+format' && ! matches 'ruff[[:space:]]+format[^;|]*--(check|diff)'; then mutating=1; fi
 if matches '(^|[^a-z])black[[:space:]]' && ! matches 'black[^;|]*--check'; then mutating=1; fi
 # Output redirection to a file; redirections to null devices or other streams are fine.
-stripped=$(printf '%s\n' "$text" | sed -E 's/[0-9&*]?>>?[[:space:]]*(&[0-9]|\/dev\/null|\$null|[Nn][Uu][Ll])//g; s/(=|-)>//g')
+stripped=$(printf '%s\n' "$scan" | sed -E 's/[0-9&*]?>>?[[:space:]]*(&[0-9]|\/dev\/null|\$null|[Nn][Uu][Ll])//g; s/(=|-)>//g')
 printf '%s\n' "$stripped" | grep -E '>' >/dev/null && mutating=1
+# Thread storage is writable through the heredoc form above, so it may only be read: never redefined or executed.
+left=$(printf '%s\n' "$scan" | tr 'A-Z' 'a-z' | sed -E 's/\$\{bb_thread_storage\}//g; s/\$(env:)?bb_thread_storage([^a-z0-9_]|$)/\2/g; s/\$(env:)?bb_thread_storage([^a-z0-9_]|$)/\2/g')
+printf '%s\n' "$left" | grep -F 'bb_thread_storage' >/dev/null && mutating=1
+matches '\$env:bb_thread_storage[[:space:]]*=' && mutating=1
+matches '(^|[^a-z0-9_-])(sh|bash|zsh|dash|ksh|source|eval|exec|python3?|node|perl|ruby|pwsh|powershell|iex|invoke-expression)[[:space:]][^;|&]*bb_thread_storage' && mutating=1
+matches '(^|[;&|(])[[:space:]]*\.[[:space:]]+[^;|&]*bb_thread_storage' && mutating=1
+matches '(^|[;&|(])[[:space:]]*(&[[:space:]]*)?"?\$\{?(env:)?bb_thread_storage' && mutating=1
+matches 'bb_thread_storage[^;&]*\|[[:space:]]*(sh|bash|zsh|dash|ksh|pwsh|powershell|iex|invoke-expression)([^a-z]|$)' && mutating=1
 
 if [ "$mutating" -eq 1 ]; then
-  deny "The orchestrator does not run commands that change the repository or environment. Delegate it to a worker. Your own shell use is limited to Archgate preflight and checks, read-only inspection (git status/diff/log/show), and verification in check mode."
+  hint='To hand over an assignment, write it with cat > "$BB_THREAD_STORAGE/<name>.md" <<'"'"'EOF'"'"', the text, then EOF on its own line, then run bb plugin run role-picker spawn <role> --assignment-file "$BB_THREAD_STORAGE/<name>.md".'
+  deny "The orchestrator does not run commands that change the repository or environment. Delegate it to a worker. Your own shell use is limited to Archgate preflight and checks, read-only inspection (git status/diff/log/show), and verification in check mode. $hint"
 fi
 exit 0
