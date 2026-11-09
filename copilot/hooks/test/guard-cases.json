@@ -311,7 +311,7 @@
         "e":  "allow",
         "s":  "root",
         "a":  {
-                  "command":  "bb plugin run role-picker spawn review --assignment-file x.md --worker thr_1\nbb thread output thr_1\necho \"$BB_THREAD_STORAGE\""
+                  "command":  "bb plugin run role-picker spawn review --assignment-file x.md --worker thr_1\nbb thread output thr_1"
               }
     },
     {
@@ -655,5 +655,113 @@
         "a":  {
                   "input":  "bb plugin run role-picker ask --questions-stdin \u003c\u003c\u0027EOF\u0027\ngit push\nEOF"
               }
+    },
+    {
+        "id": "R1",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "echo \"a\\\"\nbb plugin run role-picker ask --questions-stdin <<'EOF'\ngit push origin\nEOF\n\"\nrm -rf x"
+        }
+    },
+    {
+        "id": "R2",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "cat > \"$BB_THREAD_STORAGE/a.md\" <<'EOF'\ngit push\nEOF\nf=\"$BB_THREAD_STORAGE/a.md\"\nsh \"$f\""
+        }
+    },
+    {
+        "id": "R3",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "bb() { sh \"$2\"; }\nbb plugin run role-picker spawn plan --assignment-file x.md"
+        }
+    },
+    {
+        "id": "R4",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "alias cat=sh"
+        }
+    },
+    {
+        "id": "R5",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "for f in \"$BB_THREAD_STORAGE\"/*; do sh \"$f\"; done"
+        }
+    },
+    {
+        "id": "R6",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "sh /tmp/x/thread-storage/thr_1/a.md"
+        }
+    },
+    {
+        "id": "R7",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "PATH=/tmp/evil:$PATH bb plugin run role-picker show"
+        }
+    },
+    {
+        "id": "R8",
+        "t": "powershell",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "function bb { & sh $args }"
+        }
+    },
+    {
+        "id": "R9",
+        "t": "powershell",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "Set-Alias cat Invoke-Expression"
+        }
+    },
+    {
+        "id": "R10",
+        "t": "powershell",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "$env:PATH = 'C:\\evil;' + $env:PATH"
+        }
+    },
+    {
+        "id": "R11",
+        "t": "bash",
+        "e": "allow",
+        "s": "root",
+        "a": {
+            "command": "bb plugin run role-picker spawn plan --assignment-file \"$BB_THREAD_STORAGE/plan-a.md\""
+        }
+    },
+    {
+        "id": "R12",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "x=\"$BB_THREAD_STORAGE\""
+        }
     }
 ]

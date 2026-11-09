@@ -61,6 +61,14 @@ for (const runner of runners) {
   const sub = JSON.stringify({ sessionId: "subagent-1234", toolName: "view", toolArgs: { path: "a.py" } });
   const budget = [view, view, sub, view].map((j) => decide(runner, j, { CANTRIP_READ_BUDGET: "2" })).join(",");
   check(runner, "read budget", budget, "allow,allow,allow,deny");
+  // A failing awk pre-scan must deny: the guard must never allow a command it could not scan.
+  if (runner.name !== "ps1") {
+    const fakeBin = path.join(tmp, `fake-awk-${runner.name}`);
+    fs.mkdirSync(fakeBin, { recursive: true });
+    fs.writeFileSync(path.join(fakeBin, "awk"), "#!/bin/sh\nexit 2\n", { mode: 0o755 });
+    const ls = payload({ t: "bash", s: "root", a: { command: "ls" } });
+    check(runner, "awk failure denies", decide(runner, ls, { PATH: `${fakeBin}${path.delimiter}${process.env.PATH}` }), "deny");
+  }
   fs.rmSync(stateDir, { recursive: true, force: true });
   console.log(`[${runner.name}] ${cases.length} cases x 2 payload spellings, plus unset storage and the read budget`);
 }
