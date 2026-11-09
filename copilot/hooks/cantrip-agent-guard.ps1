@@ -36,7 +36,11 @@ $mutating = @(
     '\([ \t]*\)',
     '(?im)(^|[ ;&|(])PATH=',
     '(?i)\$env:PATH\s*=',
-    '(?i)\b(Set-Alias|New-Alias|Set-Item)\b'
+    '(?i)\b(Set-Alias|New-Alias|Set-Item)\b',
+    '(?im)(^|[^a-z0-9_-])(sh|bash|zsh|dash|ksh|source|eval|exec|python3?|node|perl|ruby|pwsh|powershell|iex|invoke-expression|invoke-command)[ \t]+"?\$[0-9@*{]',
+    '(?im)(^|[;&|(])[ \t]*(\.|&)[ \t]+"?\$[0-9@*{]',
+    '(?im)(^|[;&|(])[ \t]*"?\$[0-9@*{]',
+    '(?im)(^|[;|(])[ \t]*&[ \t]+"?\$'
 )
 $assignmentHint = 'To hand over an assignment, write it with cat > "$BB_THREAD_STORAGE/<name>.md" <<''EOF'', the text, then EOF on its own line, then run bb plugin run role-picker spawn <role> --assignment-file "$BB_THREAD_STORAGE/<name>.md".'
 
@@ -156,7 +160,7 @@ foreach ($call in $calls) {
                 Deny "The orchestrator does not run commands that change the repository or environment (matched: '$($Matches[0].Trim())'). Delegate it to a worker. Your own shell use is limited to Archgate preflight and checks, read-only inspection (git status/diff/log/show), and verification in check mode. $assignmentHint"
             }
         }
-        $left = $scan -replace '(?im)(^|[^a-z0-9_-])(bb[ \t]+plugin[ \t]+run[ \t]+role-picker[ \t]+spawn)([^;&|$`()"]*)--assignment-file[ \t]+"\$\{?(env:)?BB_THREAD_STORAGE\}?[\\/][a-z0-9_$][a-z0-9._$-]*\.(md|txt)"', '$1$2$3'
+        $left = $scan -replace '(?im)(^[ \t]*|;[ \t]*)(bb[ \t]+plugin[ \t]+run[ \t]+role-picker[ \t]+spawn)([^;&|$`()"]*)--assignment-file[ \t]+"\$\{?(env:)?BB_THREAD_STORAGE\}?[\\/][a-z0-9_$][a-z0-9._$-]*\.(md|txt)"', '$1$2$3'
         if ($left -match '(?i)BB_THREAD_STORAGE|thread-storage') {
             Deny "The orchestrator does not run commands that change the repository or environment (matched: 'BB_THREAD_STORAGE'). Thread storage may only be read, never redefined. $assignmentHint"
         }

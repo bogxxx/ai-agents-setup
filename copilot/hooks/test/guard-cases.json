@@ -808,5 +808,113 @@
         "a": {
             "command": "$a = @('--assignment-file', \"$env:BB_THREAD_STORAGE\\a.md\"); & $a[1]"
         }
+    },
+    {
+        "id": "X1",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "cat > \"$BB_THREAD_STORAGE/a.md\" <<'EOF2'\ngit push\nEOF2\nset -- bb plugin run role-picker spawn plan --assignment-file \"$BB_THREAD_STORAGE/a.md\"\nsh \"$8\""
+        }
+    },
+    {
+        "id": "X2",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "set -- bb plugin run role-picker spawn plan --assignment-file \"$BB_THREAD_STORAGE/a.md\""
+        }
+    },
+    {
+        "id": "X3",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "printf %s bb plugin run role-picker spawn plan --assignment-file \"$BB_THREAD_STORAGE/a.md\""
+        }
+    },
+    {
+        "id": "X4",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "x=\"bb plugin run role-picker spawn plan --assignment-file $BB_THREAD_STORAGE/a.md\""
+        }
+    },
+    {
+        "id": "X5",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "echo bb plugin run role-picker spawn plan --assignment-file \"$BB_THREAD_STORAGE/a.md\" | sh"
+        }
+    },
+    {
+        "id": "X6",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "sh \"$8\""
+        }
+    },
+    {
+        "id": "X7",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "eval \"$@\""
+        }
+    },
+    {
+        "id": "X8",
+        "t": "bash",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "true && bb plugin run role-picker spawn plan --assignment-file \"$BB_THREAD_STORAGE/a.md\""
+        }
+    },
+    {
+        "id": "X9",
+        "t": "bash",
+        "e": "allow",
+        "s": "root",
+        "a": {
+            "command": "for n in a; do bb plugin run role-picker spawn plan --assignment-file \"$BB_THREAD_STORAGE/a.md\"; done"
+        }
+    },
+    {
+        "id": "X10",
+        "t": "powershell",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "Write-Output bb plugin run role-picker spawn plan --assignment-file \"$env:BB_THREAD_STORAGE/a.md\""
+        }
+    },
+    {
+        "id": "X11",
+        "t": "powershell",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "$a = @('bb plugin run role-picker spawn plan --assignment-file \"$env:BB_THREAD_STORAGE\\a.md\"'); $a[0]"
+        }
+    },
+    {
+        "id": "X12",
+        "t": "powershell",
+        "e": "deny",
+        "s": "root",
+        "a": {
+            "command": "& $args[0]"
+        }
     }
 ]
