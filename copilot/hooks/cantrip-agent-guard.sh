@@ -68,6 +68,17 @@ if has_name 'powershell' && ! has_name 'bash|Bash|write_bash|write_powershell'; 
 scan_awk='
 function flush(  i) { for (i = 1; i <= n; i++) print buf[i]; n = 0 }
 function count(s, re,  t) { t = s; return gsub(re, "", t) }
+# Only a bb role-picker spawn at command position (line start, or after a semicolon or the do keyword), with no quote before it on
+# the line and no earlier ambiguity, may have its thread-storage assignment file replaced by a neutral token.
+function strip(   l, pre) {
+  if (bad) return
+  l = tolower($0)
+  if (!match(l, spawn_re)) return
+  pre = substr(l, 1, RSTART - 1)
+  if (pre ~ noq) return
+  if (!match(l, arg_re)) return
+  $0 = substr($0, 1, RSTART - 1) "\"ASSIGNMENT\"" substr($0, RSTART + RLENGTH)
+}
 function taints(s) {
   if (s ~ /<</ || s ~ /\\/ || s ~ /`/) return 1
   if (count(s, q) % 2 || count(s, "\"") % 2 || count(s, "`") % 2) return 1
@@ -81,6 +92,10 @@ BEGIN {
   e1sh = "^[ \t]*" rp
   e3sh = "^[ \t]*cat[ \t]+>[ \t]*\"\\$BB_THREAD_STORAGE/[A-Za-z0-9_][A-Za-z0-9._-]*\\.(md|txt)\"[ \t]*$"
   e1ps = "^\\|[ \t]*" rp
+  bet = "[^;&|$`()\"" q "]*"
+  spawn_re = "(^|;)[ \t]*(do[ \t]+)?bb[ \t]+plugin[ \t]+run[ \t]+role-picker[ \t]+spawn" bet "--assignment-file[ \t]+\"\\$\\{?(env:)?bb_thread_storage\\}?[\\\\/][a-z0-9_$][a-z0-9._$-]*\\.(md|txt)\""
+  arg_re = "\"\\$\\{?(env:)?bb_thread_storage\\}?[\\\\/][a-z0-9_$][a-z0-9._$-]*\\.(md|txt)\""
+  noq = "[\"" q "`(]"
   e3ps = "^\\|[ \t]*set-content[ \t]+-literalpath[ \t]+\"\\$env:bb_thread_storage\\\\[a-z0-9_][a-z0-9._-]*\\.(md|txt)\"([ \t]+-encoding[ \t]+utf8)?[ \t]*$"
 }
 st == 1 {
@@ -106,6 +121,7 @@ st == 2 {
     if (head ~ e1sh) { print head; n = 0; st = 1; next }
     if (store && head ~ e3sh && head !~ /\.\./) { n = 0; buf[++n] = $0; st = 1; next }
   }
+  strip()
   if (taints($0)) bad = 1
   print
 }
@@ -135,8 +151,7 @@ if matches '(^|[^a-z])black[[:space:]]' && ! matches 'black[^;|]*--check'; then 
 stripped=$(printf '%s\n' "$scan" | sed -E 's/[0-9&*]?>>?[[:space:]]*(&[0-9]|\/dev\/null|\$null|[Nn][Uu][Ll])//g; s/(=|-)>//g')
 printf '%s\n' "$stripped" | grep -E '>' >/dev/null && mutating=1
 # Thread storage is writable through the heredoc form above, so it may only be read: never redefined or executed.
-left=$(printf '%s\n' "$scan" | tr 'A-Z' 'a-z' | sed -E 's/(^[[:space:]]*(do[[:space:]]+)?|;[[:space:]]*(do[[:space:]]+)?)bb[[:space:]]+plugin[[:space:]]+run[[:space:]]+role-picker[[:space:]]+spawn([^;&|$`()"]*)--assignment-file[[:space:]]+"\$\{?(env:)?bb_thread_storage\}?[\\/][a-z0-9_$][a-z0-9._$-]*\.(md|txt)"/\1bb plugin run role-picker spawn\4/g')
-printf '%s\n' "$left" | grep -E 'bb_thread_storage|thread-storage' >/dev/null && mutating=1
+printf '%s\n' "$scan" | grep -iE 'bb_thread_storage|thread-storage' >/dev/null && mutating=1
 # Aliases, functions, PATH changes and exported functions could rebind bb, cat or sh to something else.
 matches '(^|[^a-z])(alias|function|hash)[[:space:]]' && mutating=1
 matches '(^|[^a-z])export[[:space:]]+-f' && mutating=1
