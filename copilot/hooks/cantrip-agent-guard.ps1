@@ -30,7 +30,13 @@ $mutating = @(
     '(?im)(^|[^a-z0-9_-])(sh|bash|zsh|dash|ksh|source|eval|exec|python3?|node|perl|ruby|pwsh|powershell|iex|invoke-expression)[ \t][^;|&\r\n]*BB_THREAD_STORAGE',
     '(?im)(^|[;&|(])[ \t]*\.[ \t]+[^;|&\r\n]*BB_THREAD_STORAGE',
     '(?im)(^|[;&|(])[ \t]*(&[ \t]*)?"?\$\{?(env:)?BB_THREAD_STORAGE',
-    '(?i)BB_THREAD_STORAGE[^;&\r\n]*\|[ \t]*(sh|bash|zsh|dash|ksh|pwsh|powershell|iex|invoke-expression)([^a-z]|$)'
+    '(?i)BB_THREAD_STORAGE[^;&\r\n]*\|[ \t]*(sh|bash|zsh|dash|ksh|pwsh|powershell|iex|invoke-expression)([^a-z]|$)',
+    '(?im)(^|[^a-z])(alias|function|hash)[ \t]',
+    '(?im)(^|[^a-z])export[ \t]+-f\b',
+    '\(\)[ \t]*\{',
+    '(?im)(^|[ ;&|(])PATH=',
+    '(?i)\$env:PATH\s*=',
+    '(?i)\b(Set-Alias|New-Alias|Set-Item)\b'
 )
 $assignmentHint = 'To hand over an assignment, write it with cat > "$BB_THREAD_STORAGE/<name>.md" <<''EOF'', the text, then EOF on its own line, then run bb plugin run role-picker spawn <role> --assignment-file "$BB_THREAD_STORAGE/<name>.md".'
 
@@ -72,7 +78,7 @@ function Get-GuardScanText([string]$text, [bool]$shForms, [bool]$psForms, [bool]
             if ($storeOk -and $head -cmatch $e3sh -and $head -notmatch '\.\.') { $buf.Clear(); $buf.Add($line); $st = 1; continue }
         }
         $count = { param($pattern) ([regex]::Matches($line, $pattern)).Count }
-        if ($line -match '<<|\\$|`$' -or (& $count "'") % 2 -or (& $count '"') % 2 -or (& $count '`') % 2 -or (& $count '\(') -ne (& $count '\)')) { $bad = $true }
+        if ($line -match '<<|\\|`$' -or (& $count "'") % 2 -or (& $count '"') % 2 -or (& $count '`') % 2 -or (& $count '\(') -ne (& $count '\)')) { $bad = $true }
         $out.Add($line)
     }
     if ($st) { $out.AddRange($buf) }
@@ -140,14 +146,18 @@ foreach ($call in $calls) {
         }
         $shForms = $call.name -cin @('bash', 'Bash')
         $psForms = $call.name -ceq 'powershell'
-        $scan = Get-GuardScanText $text $shForms $psForms ([bool]$env:BB_THREAD_STORAGE)
+        try {
+            $scan = Get-GuardScanText $text $shForms $psForms ([bool]$env:BB_THREAD_STORAGE)
+        } catch {
+            Deny 'The orchestrator could not parse this command, so it cannot tell that it is safe. Run it as a plain command.'
+        }
         foreach ($pattern in $mutating) {
             if ($scan -match $pattern) {
                 Deny "The orchestrator does not run commands that change the repository or environment (matched: '$($Matches[0].Trim())'). Delegate it to a worker. Your own shell use is limited to Archgate preflight and checks, read-only inspection (git status/diff/log/show), and verification in check mode. $assignmentHint"
             }
         }
-        $left = $scan -replace '(?i)\$\{BB_THREAD_STORAGE\}', '' -replace '(?i)\$(env:)?BB_THREAD_STORAGE(?![A-Za-z0-9_])', ''
-        if ($left -match '(?i)BB_THREAD_STORAGE') {
+        $left = $scan -replace '(?i)--assignment-file[ \t]+"\$\{?(env:)?BB_THREAD_STORAGE\}?[\\/][a-z0-9_$][a-z0-9._$-]*\.(md|txt)"', ''
+        if ($left -match '(?i)BB_THREAD_STORAGE|thread-storage') {
             Deny "The orchestrator does not run commands that change the repository or environment (matched: 'BB_THREAD_STORAGE'). Thread storage may only be read, never redefined. $assignmentHint"
         }
     }
