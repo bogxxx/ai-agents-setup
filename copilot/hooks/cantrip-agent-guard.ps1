@@ -60,9 +60,9 @@ function Get-GuardScanText([string]$text, [bool]$shForms, [bool]$psForms, [bool]
     $buf = New-Object System.Collections.Generic.List[string]
     $st = 0; $tag = ''; $bad = $false
     $q = "'"
-    $spawnRx = '(^|;)[ \t]*(do[ \t]+)?bb[ \t]+plugin[ \t]+run[ \t]+role-picker[ \t]+spawn[^;&|$`()"' + $q + ']*--assignment-file[ \t]+"\$\{?(env:)?bb_thread_storage\}?[\\/][a-z0-9_$][a-z0-9._$-]*\.(md|txt)"'
+    $spawnRx = '(^|;)[ \t]*(do[ \t]+)?bb[ \t]+plugin[ \t]+run[ \t]+role-picker[ \t]+spawn[^;&|$`()"' + $q + '\\]*--assignment-file[ \t]+"\$\{?(env:)?bb_thread_storage\}?[\\/][a-z0-9_$][a-z0-9._$-]*\.(md|txt)"'
     $argRx = '"\$\{?(env:)?bb_thread_storage\}?[\\/][a-z0-9_$][a-z0-9._$-]*\.(md|txt)"'
-    $noq = '["' + $q + '`(]'
+    $noq = '["' + $q + '`(\\]'
     foreach ($line in (($text -replace "`r", '') -split "`n")) {
         if ($st -eq 1) {
             if ($line -ceq $tag) { $st = 0; $buf.Clear() } else { $buf.Add($line) }
@@ -86,7 +86,7 @@ function Get-GuardScanText([string]$text, [bool]$shForms, [bool]$psForms, [bool]
             if ($storeOk -and $head -cmatch $e3sh -and $head -notmatch '\.\.') { $buf.Clear(); $buf.Add($line); $st = 1; continue }
         }
         $count = { param($pattern) ([regex]::Matches($line, $pattern)).Count }
-        if (-not $bad) {
+        if (-not $bad -and $storeOk) {
             $l = $line.ToLowerInvariant()
             $m = [regex]::Match($l, $spawnRx)
             if ($m.Success -and $l.Substring(0, $m.Index) -notmatch $noq) {

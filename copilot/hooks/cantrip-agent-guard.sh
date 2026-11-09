@@ -71,7 +71,7 @@ function count(s, re,  t) { t = s; return gsub(re, "", t) }
 # Only a bb role-picker spawn at command position (line start, or after a semicolon or the do keyword), with no quote before it on
 # the line and no earlier ambiguity, may have its thread-storage assignment file replaced by a neutral token.
 function strip(   l, pre) {
-  if (bad) return
+  if (bad || !store) return
   l = tolower($0)
   if (!match(l, spawn_re)) return
   pre = substr(l, 1, RSTART - 1)
@@ -92,10 +92,10 @@ BEGIN {
   e1sh = "^[ \t]*" rp
   e3sh = "^[ \t]*cat[ \t]+>[ \t]*\"\\$BB_THREAD_STORAGE/[A-Za-z0-9_][A-Za-z0-9._-]*\\.(md|txt)\"[ \t]*$"
   e1ps = "^\\|[ \t]*" rp
-  bet = "[^;&|$`()\"" q "]*"
+  bet = "[^;&|$`()\\\\\"" q "]*"
   spawn_re = "(^|;)[ \t]*(do[ \t]+)?bb[ \t]+plugin[ \t]+run[ \t]+role-picker[ \t]+spawn" bet "--assignment-file[ \t]+\"\\$\\{?(env:)?bb_thread_storage\\}?[\\\\/][a-z0-9_$][a-z0-9._$-]*\\.(md|txt)\""
   arg_re = "\"\\$\\{?(env:)?bb_thread_storage\\}?[\\\\/][a-z0-9_$][a-z0-9._$-]*\\.(md|txt)\""
-  noq = "[\"" q "`(]"
+  noq = "[\"" q "`(\\\\]"
   e3ps = "^\\|[ \t]*set-content[ \t]+-literalpath[ \t]+\"\\$env:bb_thread_storage\\\\[a-z0-9_][a-z0-9._-]*\\.(md|txt)\"([ \t]+-encoding[ \t]+utf8)?[ \t]*$"
 }
 st == 1 {
